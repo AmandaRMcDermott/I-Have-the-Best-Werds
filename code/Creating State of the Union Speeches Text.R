@@ -84,7 +84,7 @@ sotu_full <- sotu_full[-c(1:108),]
 
 # Rename columns to prepare merging with USUNGD.csv
 sotu <- sotu %>% 
-  rename("country" = "USA", "text" = "speechtext") %>% 
+  rename("country" = "USA", "text" = "speechtext") 
  
 sotu$country <- "USA" 
 
