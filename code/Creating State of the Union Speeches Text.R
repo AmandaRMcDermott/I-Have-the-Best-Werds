@@ -22,11 +22,10 @@ library(stringr)
 # Find links to each speech
 
 url <- 'http://stateoftheunion.onetwothree.net/texts/index.html'
-
-first_page <- read_html(url)
+link <- read_html(url)
 
 # Get unique speech names and dates
-html_names_date <- first_page%>% 
+html_names_date <- link %>% 
   html_nodes("div#content") %>% 
   html_nodes("div#text") %>% 
   html_nodes("ul") %>% 
@@ -34,7 +33,7 @@ html_names_date <- first_page%>%
   html_text()
 
 # Get unique html links
-html_codes <- first_page%>% 
+html_codes <- link %>% 
   html_nodes("div#content") %>% 
   html_nodes("div#text") %>% 
   html_nodes("ul") %>% 
@@ -82,6 +81,12 @@ sotu_full <- data.frame(matrix(nrow=1,ncol=3))
 colnames(sotu_full) = c("speechtext","year","date")
 sotu_full <- speechtext(html_codes)
 sotu_full <- sotu_full[-c(1:108),]
+
+# Rename columns to prepare merging with USUNGD.csv
+sotu <- sotu %>% 
+  rename("country" = "USA", "text" = "speechtext") %>% 
+ 
+sotu$country <- "USA" 
 
 # Write CSV files
 write.csv(sotu, "sotu.csv")
