@@ -19,6 +19,9 @@ tidy_us_words %>%
 tidy_us_words <- tidy_us_words %>% 
   filter(!is.na(word))
 
+##Uploading
+write_csv(tidy_us_words, "tidy_us_words.csv")
+
 whatsup <- subset(tidy_speeches, is.na(text))
 ###Graphs
 tidy_us_words %>%
