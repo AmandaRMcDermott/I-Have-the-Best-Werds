@@ -105,8 +105,16 @@ sotu <- sotu %>%
   rename("context" = X1) %>% 
   select(country, year, text, context)
 
+# For unnest_tokens
+library(tidytext)
+
+# Separate sentences from eachother in each speech for each speaker
+sotu_tidy <- sotu %>% 
+  unnest_tokens(text, text, token = "sentences") %>%
+  select(country, year, text, context)
+
 # Rbind
-us_speeches <- rbind(sotu, USUNGD)
+us_speeches <- rbind(sotu_tidy, USUNGD)
 
 #Write CSV
 write_csv(us_speeches, "us_speeches.csv")
