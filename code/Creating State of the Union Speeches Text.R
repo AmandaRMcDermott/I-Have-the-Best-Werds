@@ -91,3 +91,22 @@ sotu$country <- "USA"
 # Write CSV files
 write.csv(sotu, "sotu.csv")
 write.csv(sotu_full, "sotu_full.csv")
+
+
+
+# Combine sotu and USUNGD  ------------------------------------------------
+
+# Clean up sotu once again for merging
+# Fill X1 column wth context label "SOTU"
+sotu$X1 <- "SOTU"
+
+# Rename X1 as the context column and then rearrange the columns
+sotu <- sotu %>% 
+  rename("context" = X1) %>% 
+  select(country, year, text, context)
+
+# Rbind
+us_speeches <- rbind(sotu, USUNGD)
+
+#Write CSV
+write_csv(us_speeches, "us_speeches.csv")
