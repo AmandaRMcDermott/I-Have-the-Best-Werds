@@ -47,3 +47,5 @@ tidy_us_words %>%
   coord_flip() +
   ggtitle("US UNGD speeches (1969+)")
 
+
+
