@@ -1,0 +1,66 @@
+\documentclass[12pt]{article}
+% === graphic packages ===
+%\usepackage{epsf,graphicx,psfrag}
+\usepackage{graphicx}
+\usepackage{lscape}
+% === bibliography package ===
+\usepackage{natbib}
+% === margin and formatting ===
+\usepackage[top=1in, bottom=1in, right=1in, left=1in]{geometry}
+\usepackage{setspace}
+%\usepackage{vmargin}
+%\setpapersize{USletter}
+% === math packages ===
+\usepackage[reqno]{amsmath}
+\usepackage{amssymb}
+% === dcolumn package ===
+\usepackage{dcolumn}
+\newcolumntype{.}{D{.}{.}{-1}}
+\newcolumntype{d}[1]{D{.}{.}{#1}}
+% === additional packages ===
+\usepackage{url}
+% === definitions ===
+\newcommand{\bibtex}{\textsc{Bib\TeX}}
+% === title, author, etc. ===
+\title{%
+  Talking Heads of State \
+  \large Text Based Analysis of Executive Speeches to Domestic and International Audiences}
+\author{Austin Jang and Amanda McDermott}
+\date{December 2018}
+\begin{document}
+\maketitle
+% === abstract ===
+\begin{abstract}
+We look at two countries: the Philippines, and the United States. We analyze "state of the union" speeches.
+We analyze speeches given at the United Nation general debates.
+\end{abstract}
+% === spacing ===
+\doublespacing
+\tableofcontents
+\clearpage
+%=== text starts here ===
+\section{Introduction}
+\label{sec:intro}
+While the US State of the Union address if obviously not conducted in any other country besides the US, there are
+foreign equivalents to the state of the union. For example, in the Philippines, the president delivers an annual 'state
+of the nation' address. In China, the president delivers a report to the CPC every five years. While these speeches may vary
+on certain elements ubiquitous to each country, we would contend that these speeches do share certain features that make them
+comparable. Namely, first, the content of the speeches are determined by the executive, second, the speeches are delivered at
+regular intervals, and third, the speeches are directed at their respective legislative branches, but are also heard by the people of the
+state at large.
+
+\section{Data Collection}
+\label{sec:data}
+All text data for the UN general debates was provided by \cite{baturo:08}. \cite{baturo:08} provided cleaned .txt files of all UNGD
+speeches given from 1970-2018.  On the other hand, text data for SOTU speeches was much more difficult to find, as expected,
+different countries SOTU speeches were not all located in one central location. 
+
+
+
+\singlespacing 
+\bibliographystyle{apsr}
+\bibliography{paper}
+
+\end{document}
+
+
