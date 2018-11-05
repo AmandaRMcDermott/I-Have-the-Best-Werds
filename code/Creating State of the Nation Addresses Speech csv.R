@@ -7,6 +7,10 @@ lapply(packages, library, character.only = T)
 
 # Grab Dates for the Speeches -----------------------------------------------------------
 
+url <- "https://www.officialgazette.gov.ph/past-sona-speeches/"
+
+url <- read_html(url)
+
 sona_table <- url %>%
   html_nodes("td") %>% 
   html_text()
@@ -24,9 +28,6 @@ sona_dates <- sona_dates %>%
 
 # Get Unique HTML Links ---------------------------------------------------
 
-url <- "https://www.officialgazette.gov.ph/past-sona-speeches/"
-
-url <- read_html(url)
 
 urls <- url %>% 
   html_nodes("td+ td a") %>% 
@@ -48,9 +49,8 @@ scrape_it <- function(url){
 # Test - Incomplete 
 t1 <- urls[1:3]
 
-for(i in t1[1]){
-  test_test <- scrape_it(i)
-  test_test <- as.data.frame(test_test)
-  for(d in sona_dates)
-    for(l in length(i))
+for(i in 1:length(urls)){
+  test_test <- scrape_it(t1[i])
+  indic<- as.character(i + 1901)
+  write.csv(test_test, paste("philippines", indic, ".txt", sep = ""))
 }
