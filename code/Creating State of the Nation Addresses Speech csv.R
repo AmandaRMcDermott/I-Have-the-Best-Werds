@@ -50,7 +50,7 @@ scrape_it <- function(url){
 t1 <- urls[1:3]
 
 for(i in 1:length(urls)){
-  test_test <- scrape_it(t1[i])
-  indic<- as.character(i + 1901)
-  write.csv(test_test, paste("philippines", indic, ".txt", sep = ""))
+  test_test <- scrape_it(urls[i])
+  indic<- as.character(i + 1934)
+  write.csv(test_test, paste("philippines_", indic, ".txt", sep = ""))
 }
