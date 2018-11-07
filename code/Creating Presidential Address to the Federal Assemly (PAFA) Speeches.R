@@ -115,10 +115,10 @@ t4 <- t3 %>%
 t4$year <- c(2018, 2016, 2015, 2014, 2013, 2012, 2011, 2010, 2009, 2008)
 
 # Add country column and Russia label
-t4$country <- "Russia"
+t4$country <- "RUS"
 
 # Add PAFA context column
-t4$context <- "PAFA"
+t4$context <- "SOTU"
 
 # Rename dataframe as "pafa"
 pafa <- t4
@@ -131,3 +131,8 @@ pafa_tidy <- pafa %>%
 # Write csv
 write_csv(pafa_tidy, "pafa.csv")
 
+# Merge  pafa.csv and RUSUNGD.csv
+rus_speeches <- rbind(pafa, RUSUNGD)
+
+# Create csv
+write_csv(rus_speeches, "rus_speeches.csv")
