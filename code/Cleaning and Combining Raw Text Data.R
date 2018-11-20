@@ -93,5 +93,10 @@ speeches <- rbind(chn_sotu, chn_ungd, gha_sotu, gha_ungd, phl_sotu, phl_ungd, ru
 speeches <- speeches %>% 
   na.omit()
 
+# Clean and add on rus_00_07
+rus_00_07$country <- "RUS"
+rus_00_07$context <- "SOTU"
+speeches <- rbind(speeches, rus_00_07)
+
 # Write csv
-write.csv(speeches, "speeches.csv")
+write_csv(speeches, "speeches.csv")

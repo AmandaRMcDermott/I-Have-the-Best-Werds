@@ -62,7 +62,7 @@ urls <- c("http://en.kremlin.ru/events/president/transcripts/copy/56957",
          "http://en.kremlin.ru/events/president/transcripts/copy/1968")
 
 # Create a function that takes urls and scraps out the text
-scrap_it <- function(url){
+scrape_it <- function(url){
   read_url <- read_html(url) 
   read_url %>% 
     html_node("textarea#special_textarea") %>% 
@@ -72,7 +72,7 @@ scrap_it <- function(url){
 }
 
 # Scrap all pafa speeches and output a list to be converted into a df
-pafa <- lapply(urls, scrap_it)
+pafa <- lapply(urls, scrape_it)
 
 # Clean up for Putin ------------------------------------------------------
 
@@ -136,3 +136,53 @@ rus_speeches <- rbind(pafa, RUSUNGD)
 
 # Create csv
 write_csv(rus_speeches, "rus_speeches.csv")
+
+
+# 2nd round of grabbing speeches: 2000-07
+urls <- c("http://en.kremlin.ru/events/president/transcripts/copy/24203", 
+          "http://en.kremlin.ru/events/president/transcripts/copy/23577", 
+          "http://en.kremlin.ru/events/president/transcripts/copy/22931",
+          "http://en.kremlin.ru/events/president/transcripts/copy/22494",
+          "http://en.kremlin.ru/events/president/transcripts/copy/21998",
+          "http://en.kremlin.ru/events/president/transcripts/copy/21567",
+          "http://en.kremlin.ru/events/president/transcripts/copy/21216",
+          "http://en.kremlin.ru/events/president/transcripts/copy/21480")
+
+# Scrape function
+scrape_it <- function(url){
+  read_url <- read_html(url) 
+  read_url %>% 
+    html_node("textarea#special_textarea") %>% 
+    html_text() %>% 
+    gsub("[\n<>]", "", .)
+}
+
+# Use lapply to grab texts
+pafa1 <- lapply(urls, scrape_it)
+
+# Turn list into a data frame
+pafa2 <- data.frame(unlist(pafa1))
+
+# Rename column to "text"
+pafa3 <- pafa2 %>% 
+  rename(text = "unlist.pafa1.")
+
+pafa4 <- str_extract_all(pafa3$text, "Moscow.+")
+pafa5<- data.frame(unlist(pafa4))
+
+# Grab dates and put them in a df
+dates <- str_extract_all(pafa3$text, "[0-9]{4}-[0-9]{2}-[0-9]{2}")
+
+tidy_dates <- data.frame(unlist(dates))
+
+tidy_dates <- tidy_dates %>% 
+  separate(unlist.dates., into = c("year", "delete1", "delete2"), sep = "-") %>% 
+  select(year)
+
+
+# Cbind speeches and dates
+rus_00_07 <- cbind(pafa5, tidy_dates)
+
+# Write csv
+
+write_csv(rus_00_07, "rus_00_07.csv")
