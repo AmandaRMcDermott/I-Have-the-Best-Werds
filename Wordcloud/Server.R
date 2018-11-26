@@ -1,7 +1,13 @@
-# Define server logic to plot various variables 
-# This needs to be able to create the wordclouds???
+library(shiny)
+library(tm)
+library(wordcloud)
+library(memoise)
+library(tidyverse)
+library(tidytext)
 
-server <- function(input, output){
+
+# Server
+server <- function(input, output) {
   terms <- reactive({
     input$update
     isolate({
@@ -11,14 +17,12 @@ server <- function(input, output){
       })
     })
   })
+  wordcloud_rep <- repeatable(wordcloud)
+  
+  output$plot <- renderPlot({
+    v <- terms()
+    wordcloud_rep(names(v), v, scale = c(4, 0.5),
+                  min.freq = input$freq, max.words = input$max, 
+                  colors = brewer.pal(8, "Dark2"))
+  })
 }
-
-# Make the wordcloud drawing predictable during a session
-wordcloud_rep <- repeatable(wordcloud)
-
-output$plot <- renderPlot({
-  v <- terms()
-  wordcloud_rep(names(v), v, scale = c(4, 0.5),
-                min.freq = input$freq, max.words = input$max,
-                colors = brewer.pal(8, "Dark2"))
-})
