@@ -1,12 +1,3 @@
-#
-# This is a Shiny web application. You can run the application by clicking
-# the 'Run App' button above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    http://shiny.rstudio.com/
-#
-
 library(shiny)
 library(tm)
 library(wordcloud)
@@ -16,28 +7,46 @@ library(tidytext)
 
 # Global
 speeches <- read_csv("https://raw.githubusercontent.com/Glacieus/GOVT-696-Project-Jang-McDermott/master/data/speeches.csv")
-countries <- list("China" = "CHN", "Ghana" = "GHN", "Phillipines" = "PHL", "Russia" = "RUS", "United States" = "USA", "South Africa" = "ZAF")
+countries <<- list("China" = "CHN", "Ghana" = "GHN", "Phillipines" = "PHL", "Russia" = "RUS", "United States" = "USA", "South Africa" = "ZAF")
 
-
-# Use memoise to cache the results
-getTermMatrix <- memoise(function(speech) {
-  if (!(speech %in% speeches))
-    stop("Unknown country")
+# Cache the results
+getTermMatrix <- memoise(function(country){
+  if (!(country %in% countries))
+    stop("Unkown country")
   
-  text = speeches
-  
-  myCorpus = Corpus(VectorSource(text))
-  
-  myDTM = TermDocumentMatrix(myCorpus,
-                             control = list(minWordLength = 1))
-  
-  m = as.matrix(myDTM)
-  
-  sort(rowSums(m), decreasing = T)
+  myCorpus = Corpus(VectorSource(speeches))
+  myCorpus = tm_map(myCorpus, content_transformer(tolower))
+  myCorpus = tm_map(myCorpus, removePunctuation)
+  myCorpus = tm_map(myCorpus, removeNumbers)
+  myCorpus = tm_map(myCorpus)
 })
 
-# server
-server <- function(input, output){
+
+
+# Define ui
+ui <- fluidPage(
+  # App title
+  headerPanel("Speeches Wordclouds"),
+  
+  # Sidebar for inputs
+  sidebarPanel(
+    selectInput("select", "Choose a country:",
+                choices = countries),
+    actionButton("update", "Change"),
+    hr(),
+    sliderInput("freq",
+                "Min Freq:",
+                min = 1, max = 50, value = 15)
+  ),
+  
+  # Main panel for displaying outputs
+  mainPanel(
+    plotOutput("plot")
+  )
+)
+
+# Server
+server <- function(input, output) {
   terms <- reactive({
     input$update
     isolate({
@@ -47,55 +56,16 @@ server <- function(input, output){
       })
     })
   })
+  wordcloud_rep <- repeatable(wordcloud)
+  
+  output$plot <- renderPlot({
+    v <- terms()
+    wordcloud_rep(names(v), v, scale = c(4, 0.5),
+                  min.freq = input$freq, max.words = input$max, 
+                  colors = brewer.pal(8, "Dark2"))
+  })
 }
 
-# Make the wordcloud drawing predictable during a session
-wordcloud_rep <- repeatable(wordcloud)
-
-output$plot <- renderPlot({
-  v <- terms()
-  wordcloud_rep(names(v), v, scale = c(4, 0.5),
-                min.freq = input$freq, max.words = input$max,
-                colors = brewer.pal(8, "Dark2"))
-})
 
 
-
-# ui
-fluidPage(
-  # Application title
-  titlePanel("Speeches Wordcloud"),
-  
-  sidebarLayout(
-    # Sidebar with a slider and selection inputs
-    sidebarPanel(
-      selectInput("selection", "Choose a country:",
-                  choices = countries),
-      actionButton("update", "Change"),
-      hr(),
-      sliderInput("freq",
-                  "Minimum Frequency:",
-                  min = 1,  max = 50, value = 15),
-      sliderInput("max",
-                  "Maximum Number of Words:",
-                  min = 1,  max = 300,  value = 100)
-    ),
-    
-    # Show Word Cloud
-    mainPanel(
-      plotOutput("plot")
-    )
-  )
-)
-
-  
-  
-  
-  
-  
-  
-  # Run the application
-  shinyApp(ui = ui, server = server)
-  
-  runApp("~/shinyapp")
-  
+shinyApp(ui, server)
