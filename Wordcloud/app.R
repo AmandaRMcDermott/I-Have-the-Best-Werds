@@ -15,17 +15,18 @@ library(tidyverse)
 library(tidytext)
 
 # Global
-speeches <- read_csv("~/Documents/R/speeches.csv")
+speeches <- read_csv("https://raw.githubusercontent.com/Glacieus/GOVT-696-Project-Jang-McDermott/master/data/speeches.csv")
+countries <- list("China" = "CHN", "Ghana" = "GHN", "Phillipines" = "PHL", "Russia" = "RUS", "United States" = "USA", "South Africa" = "ZAF")
+
 
 # Use memoise to cache the results
 getTermMatrix <- memoise(function(speech) {
   if (!(speech %in% speeches))
     stop("Unknown country")
   
-  myCorpus = speeches %>%
-    unnest_tokens(word, text) %>%
-    anti_join(stop_words) %>%
-    count(country, year, context, word, sort = T)
+  text = speeches
+  
+  myCorpus = Corpus(VectorSource(text))
   
   myDTM = TermDocumentMatrix(myCorpus,
                              control = list(minWordLength = 1))
@@ -35,42 +36,7 @@ getTermMatrix <- memoise(function(speech) {
   sort(rowSums(m), decreasing = T)
 })
 
-ui <- pageWithSidebar(
-  # App Title ---
-  headerPanel("Speeches Wordclouds"),
-  
-  # Sidebar panel for inputs ---
-  sidebarPanel(
-    selectPanel(
-      selectInput("selection", "Choose a country:",
-                  choices = countries),
-      actionButton("update", "Change"),
-      hr(),
-      sliderInput(
-        "freq",
-        "Minimum Frequency:",
-        min = 1,
-        max = 50,
-        value = 15
-      ),
-      sliderInput(
-        "max",
-        "Maximum Number of Words:",
-        min = 1,
-        max = 300,
-        value = 100
-      )
-    )
-  ),
-  
-  # Show Word Cloud
-  mainPanel(plotOutput("plot"))
-)
-
-
-# Define server logic to plot various variables 
-# This needs to be able to create the wordclouds???
-
+# server
 server <- function(input, output){
   terms <- reactive({
     input$update
@@ -94,7 +60,42 @@ output$plot <- renderPlot({
 })
 
 
-# Run the application 
-shinyApp(ui = ui, server = server)
 
-runApp("~/shinyapp")
+# ui
+fluidPage(
+  # Application title
+  titlePanel("Speeches Wordcloud"),
+  
+  sidebarLayout(
+    # Sidebar with a slider and selection inputs
+    sidebarPanel(
+      selectInput("selection", "Choose a country:",
+                  choices = countries),
+      actionButton("update", "Change"),
+      hr(),
+      sliderInput("freq",
+                  "Minimum Frequency:",
+                  min = 1,  max = 50, value = 15),
+      sliderInput("max",
+                  "Maximum Number of Words:",
+                  min = 1,  max = 300,  value = 100)
+    ),
+    
+    # Show Word Cloud
+    mainPanel(
+      plotOutput("plot")
+    )
+  )
+)
+
+  
+  
+  
+  
+  
+  
+  # Run the application
+  shinyApp(ui = ui, server = server)
+  
+  runApp("~/shinyapp")
+  
