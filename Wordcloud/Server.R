@@ -13,7 +13,8 @@ server <- function(input, output) {
     isolate({
       withProgress({
         setProgress(message = "Processing corpus...")
-        getTermMatrix(input$selection)
+        getTermMatrix(countries[input$selection])
+        req(countries[input$selection])
       })
     })
   })
@@ -26,3 +27,5 @@ server <- function(input, output) {
                   colors = brewer.pal(8, "Dark2"))
   })
 }
+
+shinyApp(ui, server)
