@@ -24,21 +24,30 @@ ctry <<- list("China" = "CHN", "Ghana" = "GHA", "Phillipines" = "PHL", "Russia" 
 
 type_speech <<- list("UN General Debates" = "UNGD", "State of the Union" = "SOTU")
 
-yrs <<- 1913:2018
-yrs2 <<- 1913:2018
+minyear <<- 1913:2018
+maxyear <<- 1913:2018
 
 
 # Cache the results
-getTermMatrix <- memoise(function(ctry, type_speech, yrs, yrs2){
+getTermMatrix <- memoise(function(ctry, type_speech, minyear = 2000, maxyear = 2018){
   if(missing(type_speech)){
     text <- clean_speeches %>% 
-      filter(country == ctry) %>% 
+      filter(country == ctry, year >= minyear, year <= maxyear) %>% 
+      select(text)
+  }
+  if(missing(minyear)){
+    text <- clean_speeches %>% 
+      filter(country == ctry, year >= 2000, year <= maxyear) %>% 
+      select(text)
+  }
+  if(missing(maxyear)){
+    text <- clean_speeches %>% 
+      filter(country == ctry, year >= minyear, year <= 2018) %>% 
       select(text)
   }
   else{
     text <- clean_speeches %>%
-      filter(country == ctry, context == type_speech) %>% 
-      filter(between(year, yrs, yrs2))%>%
+      filter(country == ctry, context == type_speech, year >= minyear, year <= maxyear) %>% 
       select(text)}
   
   myCorpus = Corpus(VectorSource(text))
@@ -66,47 +75,74 @@ ui <- fluidPage(
   # Sidebar for inputs
   sidebarPanel(
     selectInput("selection", "Choose a country:",
-                choices = countries),
+                choices = ctry),
     actionButton("update", "Change"),
     hr(),
     radioButtons("type", "Type of Speech",
                  choices = type_speech),
-    dateInput("yrs", label = ("Start Date"),format = "yyyy",
-              value = Sys.Date() - 1825, # minus 5 years
-              min = "1913", max = Sys.Date()),
-    hr(),
-    dateInput("yrs2", label = ("End Date"),format = "yyyy",
-              value = Sys.Date(),
-              min = "1913", max = Sys.Date()),
-    hr(),
-    sliderInput("freq",
-                "Min Freq:",
-                min = 1, max = 50, value = 15),
-    sliderInput("max",
-                "Max Number of Words:",
-                min = 1, max = 300, value = 100)
-  ),
-  
-  # Main panel for displaying outputs
-  mainPanel(
-    plotOutput("plot"),
-    textOutput("type"),
-    textOutput("dates"),
-    textOutput("dates2"))
+    sliderInput("yrs", "Years", 1913, 2018, value = c(2000, 2014)),
+    sliderInput(
+      "freq",
+      "Min Freq:",
+      min = 1,
+      max = 50,
+      value = 15
+    ),
+    sliderInput(
+      "max",
+      "Max Number of Words:",
+      min = 1,
+      max = 300,
+      value = 100
+    ),
+    h3("Available Years"),
+    
+    h5(helpText("Years avaiable for China:")),
+    h6(
+      helpText("UNGD: 1971-2017"),
+      helpText("SOTU: 1956 1969 1973 1977 1982 1987 1992 1997 2002 2007 2012 2017")),
+    
+    h5(helpText("Years available for Ghana:")),
+    h6(helpText("UNGD: 1970-2017"),
+       helpText("SOTU: 2008, 2011-2018")), 
+    
+    h5(helpText("Years available for the Phillipines:")),
+    h6(helpText("UNGD: 1970-2017"),
+       helpText("SOTU: 1935-2018")),
+    
+    h5(helpText("Years avaiable for Russia:")),
+    h6(helpText("UNGD: 1971-2017"),
+       helpText("SOTU: 2000-2018")),
+    
+    h5(helpText("Year available for the United States:")),
+    h6(helpText("UNGD: 1970-2017"),
+       helpText("SOTU: 1913-2018")),
+    
+    h5(helpText("Year available for South Africa:")),
+    h6(helpText("UNGD: 1970-2017"),
+       helpText("SOTU: 1990, 1994-2018")),
+    
+    # Main panel for displaying outputs
+    mainPanel(plotOutput("plot"),
+              textOutput("type"),
+              textOutput("dates"))
+  )
 )
 
 
 server <- function(input, output, session) {
   # Define a reactive expression for the document term matrix
   terms <- reactive({
+    minyear <- input$yrs[1]
+    maxyear <- input$yrs[2]
     req(input$selection)
-    req(input$yrs)
-    req(input$yrs2)
+    req(input$yrs[1])
+    req(input$yrs[2])
     input$update
     isolate({
       withProgress({
         setProgress(message = "Processing corpus...")
-        getTermMatrix(input$selection, input$type, input$yrs, input$yrs2)
+        getTermMatrix(input$selection, input$type, minyear, maxyear)
       })
     })
   })
