@@ -20,31 +20,25 @@ clean_speeches <- word_speeches %>%
          text = map_chr(text, paste, collapse = " ")) %>% 
   select(country, year, context, text)
 
+countries <<- list("China" = "CHN", "Ghana" = "GHA", "Phillipines" = "PHL", "Russia" = "RUS", "United States" = "USA", "South Africa" = "ZAF")
 
-#countries <<- list("China" = clean_speeches$country[clean_speeches$country == "CHN"], "Ghana" = clean_speeches$country[clean_speeches$country == "GHN"],"Phillipines" = clean_speeches$country[clean_speeches$country == "PHL"],"Russia" = clean_speeches$country[clean_speeches$country == "RUS"],"United States" = clean_speeches$country[clean_speeches$country == "USA"],"South Africa" = clean_speeches$country[clean_speeches$country == "ZAF"])
-
-"CHN" <- clean_speeches$text[clean_speeches$country == "CHN"]
-"GHA" <- clean_speeches$text[clean_speeches$country == "GHA"]
-"PHL" <- clean_speeches$text[clean_speeches$country == "PHL"]
-"RUS" <- clean_speeches$text[clean_speeches$country == "RUS"]
-"USA" <- clean_speeches$text[clean_speeches$country == "USA"]
-"ZAF" <- clean_speeches$text[clean_speeches$country == "ZAF"]
-
-countries <<- list("China" = "CHN", "Ghana" = "GHN", "Phillipines" = "PHL", "Russia" = "RUS", "United States" = "USA", "South Africa" = "ZAF")
-
+type_speech <<- list("UN General Debates" = "UNGD", "State of the Union" = "SOTU")
 
 # Cache the results
-getTermMatrix <- memoise(function(ctry) {
+getTermMatrix <- memoise(function(ctry, input$type) {
   #if (!(country %in% countries))
   #stop("Unknown country")
-  
-  text <- countries$ctry
+  if(missing(type)){
+    text <- clean_speeches %>% 
+      filter(country == ctry) %>% 
+      select(text)
+  }
+  else{
+    text <- clean_speeches %>%
+      filter(country == ctry, context == input$type) %>%
+      select(text)}
   
   myCorpus = Corpus(VectorSource(text))
-  #myCorpus = tm_map(myCorpus, content_transformer(tolower))
-  #myCorpus = tm_map(myCorpus, removePunctuation)
-  #myCorpus = tm_map(myCorpus, removeNumbers)
-  #myCorpus = tm_map(myCorpus, stripWhitespace)
   
   myDTM = TermDocumentMatrix(
     myCorpus,
@@ -54,7 +48,6 @@ getTermMatrix <- memoise(function(ctry) {
       removePunctuation = TRUE,
       removeNumbers = TRUE, stopwords = TRUE
     ))
-  #myDTM = removeSparseTerms(myDTM, 0.9)
   
   m = as.matrix(myDTM)
   
@@ -69,10 +62,12 @@ ui <- fluidPage(
   
   # Sidebar for inputs
   sidebarPanel(
-    selectInput("select", "Choose a country:",
+    selectInput("selection", "Choose a country:",
                 choices = countries),
     actionButton("update", "Change"),
     hr(),
+    selectInput("type", "Type of Speech",
+                choices = type_speech),
     sliderInput("freq",
                 "Min Freq:",
                 min = 1, max = 50, value = 15),
@@ -83,40 +78,38 @@ ui <- fluidPage(
   
   # Main panel for displaying outputs
   mainPanel(
-    plotOutput("plot")
-  )
+    plotOutput("plot"),
+    textOutput("type"))
 )
 
-# Server
-server <- function(input, output) {
-  observe({
-    if (!is.null(input$selection)){
-      terms <- reactive({
-        input$update
-        isolate({
-          withProgress({
-            setProgress(message = "Processing corpus...")
-            getTermMatrix(countries[input$selection])
-            #req(countries[input$selection])
-          }
-          })
-        })
+
+server <- function(input, output, session) {
+  # Define a reactive expression for the document term matrix
+  terms <- reactive({
+    req(input$selection)
+    input$update
+    isolate({
+      withProgress({
+        setProgress(message = "Processing corpus...")
+        #if(!is.null(input$type))
+          getTermMatrix(input$selection, input$type)
       })
+    })
   })
   
+  
+  # Make the wordcloud drawing predictable during a session
   wordcloud_rep <- repeatable(wordcloud)
   
   output$plot <- renderPlot({
     v <- terms()
-    wordcloud_rep(
-      names(v),
-      v,
-      scale = c(4, 0.5),
-      min.freq = input$freq,
-      max.words = input$max,
-      colors = brewer.pal(8, "Dark2")
-    )
+    wordcloud_rep(names(v), v, scale=c(4,0.5),
+                  min.freq = input$freq, max.words=input$max,
+                  colors=brewer.pal(8, "Dark2"))
   })
+  #output$value <- renderText({input$checkGroup})
 }
 
+
 shinyApp(ui, server)
+
