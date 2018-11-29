@@ -20,22 +20,25 @@ clean_speeches <- word_speeches %>%
          text = map_chr(text, paste, collapse = " ")) %>% 
   select(country, year, context, text)
 
-countries <<- list("China" = "CHN", "Ghana" = "GHA", "Phillipines" = "PHL", "Russia" = "RUS", "United States" = "USA", "South Africa" = "ZAF")
+ctry <<- list("China" = "CHN", "Ghana" = "GHA", "Phillipines" = "PHL", "Russia" = "RUS", "United States" = "USA", "South Africa" = "ZAF")
 
 type_speech <<- list("UN General Debates" = "UNGD", "State of the Union" = "SOTU")
 
+yrs <<- 1913:2018
+yrs2 <<- 1913:2018
+
+
 # Cache the results
-getTermMatrix <- memoise(function(ctry, input$type) {
-  #if (!(country %in% countries))
-  #stop("Unknown country")
-  if(missing(type)){
+getTermMatrix <- memoise(function(ctry, type_speech, yrs, yrs2){
+  if(missing(type_speech)){
     text <- clean_speeches %>% 
       filter(country == ctry) %>% 
       select(text)
   }
   else{
     text <- clean_speeches %>%
-      filter(country == ctry, context == input$type) %>%
+      filter(country == ctry, context == type_speech) %>% 
+      filter(between(year, yrs, yrs2))%>%
       select(text)}
   
   myCorpus = Corpus(VectorSource(text))
@@ -68,6 +71,14 @@ ui <- fluidPage(
     hr(),
     radioButtons("type", "Type of Speech",
                  choices = type_speech),
+    dateInput("yrs", label = ("Start Date"),format = "yyyy",
+              value = Sys.Date() - 1825, # minus 5 years
+              min = "1913", max = Sys.Date()),
+    hr(),
+    dateInput("yrs2", label = ("End Date"),format = "yyyy",
+              value = Sys.Date(),
+              min = "1913", max = Sys.Date()),
+    hr(),
     sliderInput("freq",
                 "Min Freq:",
                 min = 1, max = 50, value = 15),
@@ -79,7 +90,9 @@ ui <- fluidPage(
   # Main panel for displaying outputs
   mainPanel(
     plotOutput("plot"),
-    textOutput("type"))
+    textOutput("type"),
+    textOutput("dates"),
+    textOutput("dates2"))
 )
 
 
@@ -87,15 +100,17 @@ server <- function(input, output, session) {
   # Define a reactive expression for the document term matrix
   terms <- reactive({
     req(input$selection)
+    req(input$yrs)
+    req(input$yrs2)
     input$update
     isolate({
       withProgress({
         setProgress(message = "Processing corpus...")
-        #if(!is.null(input$type))
-        getTermMatrix(input$selection, input$type)
+        getTermMatrix(input$selection, input$type, input$yrs, input$yrs2)
       })
     })
   })
+  
   
   
   # Make the wordcloud drawing predictable during a session
@@ -106,8 +121,7 @@ server <- function(input, output, session) {
     wordcloud_rep(names(v), v, scale=c(4,0.5),
                   min.freq = input$freq, max.words=input$max,
                   colors=brewer.pal(8, "Dark2"))
-  })
-  #output$value <- renderText({input$checkGroup})
+  }, height = 500, width = 600)
 }
 
 
