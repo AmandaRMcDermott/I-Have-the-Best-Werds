@@ -7,7 +7,7 @@ library(tidytext)
 
 # Global
 speeches <- read_csv("https://raw.githubusercontent.com/Glacieus/GOVT-696-Project-Jang-McDermott/master/data/speeches.csv")
-#countries <<- list("China" = "CHN", "Ghana" = "GHN", "Phillipines" = "PHL", "Russia" = "RUS", "United States" = "USA", "South Africa" = "ZAF")
+countries <<- list("China" = "CHN", "Ghana" = "GHN", "Phillipines" = "PHL", "Russia" = "RUS", "United States" = "USA", "South Africa" = "ZAF")
 
 
 # Make each row a word and remove stop words
@@ -23,24 +23,32 @@ clean_speeches <- word_speeches %>%
   select(country, year, context, text)
 
 
-countries <<- list("China" = clean_speeches$country[clean_speeches$country == "CHN"], "Ghana" = clean_speeches$country[clean_speeches$country == "GHN"],"Phillipines" = clean_speeches$country[clean_speeches$country == "PHL"],"Russia" = clean_speeches$country[clean_speeches$country == "RUS"],"United States" = clean_speeches$country[clean_speeches$country == "USA"],"South Africa" = clean_speeches$country[clean_speeches$country == "ZAF"])
+#countries <<- list("China" = clean_speeches$country[clean_speeches$country == "CHN"], "Ghana" = clean_speeches$country[clean_speeches$country == "GHN"],"Phillipines" = clean_speeches$country[clean_speeches$country == "PHL"],"Russia" = clean_speeches$country[clean_speeches$country == "RUS"],"United States" = clean_speeches$country[clean_speeches$country == "USA"],"South Africa" = clean_speeches$country[clean_speeches$country == "ZAF"])
 
 
 # Cache the results
-getTermMatrix <- memoise(function(country) {
+getTermMatrix <- memoise(function(ctry) {
   #if (!(country %in% countries))
-    #stop("Unkown country")
-  myCorpus = Corpus(VectorSource(clean_speeches$text[clean_speeches$country == country]))
-  myCorpus = tm_map(myCorpus, content_transformer(tolower))
-  myCorpus = tm_map(myCorpus, removePunctuation)
-  myCorpus = tm_map(myCorpus, removeNumbers)
-  myCorpus = tm_map(myCorpus, stripWhitespace)
-  myDTM = TermDocumentMatrix(myCorpus,
-                             control = list(minWordLength = 1))
+  #stop("Unkown country")
+  myCorpus = Corpus(VectorSource(clean_speeches$text[clean_speeches$country == ctry]))
+  #myCorpus = tm_map(myCorpus, content_transformer(tolower))
+  #myCorpus = tm_map(myCorpus, removePunctuation)
+  #myCorpus = tm_map(myCorpus, removeNumbers)
+  #myCorpus = tm_map(myCorpus, stripWhitespace)
   
-  m = as.matrix(myDTM)
-
-  sort(rowSums(m), decreasing = T)
+  myDTM = TermDocumentMatrix(
+    myCorpus,
+    control = list(
+      minWordLength = 1,
+      wordLengths = c(0, Inf),
+      removePunctuation = TRUE,
+      removeNumbers = TRUE
+    ))
+    #myDTM = removeSparseTerms(myDTM, 0.9)
+    
+    m = as.matrix(myDTM)
+    
+    sort(rowSums(m), decreasing = T)
 })
 
 
