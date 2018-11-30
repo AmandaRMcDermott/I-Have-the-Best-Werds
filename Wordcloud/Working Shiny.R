@@ -4,6 +4,7 @@ library(wordcloud)
 library(memoise)
 library(tidyverse)
 library(tidytext)
+library(shinythemes)
 
 # Global
 speeches <- read_csv("https://raw.githubusercontent.com/Glacieus/GOVT-696-Project-Jang-McDermott/master/data/speeches.csv")
@@ -69,6 +70,7 @@ getTermMatrix <- memoise(function(ctry, type_speech, minyear = 2000, maxyear = 2
 
 # Define ui
 ui <- fluidPage(
+  theme = shinytheme("superhero"),
   # App title
   headerPanel("Speeches Wordclouds"),
   
@@ -165,7 +167,7 @@ server <- function(input, output, session) {
     v <- terms()
     wordcloud_rep(names(v), v, scale=c(5,1),
                   min.freq = input$freq, max.words=input$max,
-                  colors=brewer.pal(8, "Dark2"))
+                  colors=brewer.pal(8, "Set1"))
   }, height = 700)
 }
 
