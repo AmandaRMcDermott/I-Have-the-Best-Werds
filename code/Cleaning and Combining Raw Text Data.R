@@ -98,5 +98,20 @@ rus_00_07$country <- "RUS"
 rus_00_07$context <- "SOTU"
 speeches <- rbind(speeches, rus_00_07)
 
+# Since some of the SOTU speeches from the Phillipines were in Phillipino, these were translated into English and need to be recombined with the speeches.csv
+# Remove SOTU Phillipines observations
+speeches <- speeches %>% 
+  filter(country != "PHL", context != "SOTU")
+
+phl_sotu <- df %>% 
+  mutate(text = gsub("\"[0-9]+\",", "", text)) %>% 
+  separate(file, into = c("country", "year"), sep = "_") %>% 
+  mutate(year = gsub(".txt", "", year))
+  
+phl_sotu$context <- "SOTU"
+
+speeches <- rbind(speeches, phl_sotu)
+speeches <- speeches %>% na.omit
+
 # Write csv
 write_csv(speeches, "speeches.csv")
