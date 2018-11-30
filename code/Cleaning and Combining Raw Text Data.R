@@ -98,10 +98,13 @@ rus_00_07$country <- "RUS"
 rus_00_07$context <- "SOTU"
 speeches <- rbind(speeches, rus_00_07)
 
+
+
+# Nov 30th
 # Since some of the SOTU speeches from the Phillipines were in Phillipino, these were translated into English and need to be recombined with the speeches.csv
 # Remove SOTU Phillipines observations
-speeches <- speeches %>% 
-  filter(country != "PHL", context != "SOTU")
+speeches_nophlsotu <- speeches %>% 
+  filter(country != "PHL" & context != "SOTU")
 
 phl_sotu <- df %>% 
   mutate(text = gsub("\"[0-9]+\",", "", text)) %>% 
@@ -115,3 +118,49 @@ speeches <- speeches %>% na.omit
 
 # Write csv
 write_csv(speeches, "speeches.csv")
+
+# Make each row a word and remove stop words (mostly for PHL)
+word_speeches <- speeches %>% 
+  unnest_tokens(word, text) %>% 
+  anti_join(stop_words) %>% 
+  filter(word != "na",
+         word != "sa",
+         word != "applause",
+         word != "ang",
+         word != "ng",
+         word != "ko",
+         word != "mo", 
+         word != "natin",
+         word != "para",
+         word != "ito",
+         word != "mindanao",
+         word != "kayo", 
+         word != "eh",
+         word != "yung", 
+         word != "pa",
+         word != "ating",
+         word != "yan",
+         word != "ninyo",
+         word != "iyong",
+         word != "lahat",
+         word != "iyan",
+         word != "wala",
+         word != "diyan",
+         word != "ngayon",
+         word != "kasi",
+         word != "sabi",
+         word != "doon",
+         word != "isang",
+         word != "nila",
+         word != "dito") %>%
+  na.omit()
+
+# Put word back into speech format - now each row is a speech
+clean_speeches <- word_speeches %>% 
+  nest(word) %>% 
+  mutate(text = map(data, unlist),
+         text = map_chr(text, paste, collapse = " ")) %>% 
+  select(country, year, context, text)
+
+write_csv(clean_speeches, "clean_speeches.csv")
+
