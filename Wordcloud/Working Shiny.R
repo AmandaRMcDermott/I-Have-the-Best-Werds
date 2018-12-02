@@ -5,23 +5,12 @@ library(memoise)
 library(tidyverse)
 library(tidytext)
 library(shinythemes)
+library(readr)
 
 # Global
-speeches <- read_csv("https://raw.githubusercontent.com/Glacieus/GOVT-696-Project-Jang-McDermott/master/data/speeches.csv")
+clean_speeches <- read_csv("https://raw.githubusercontent.com/Glacieus/GOVT-696-Project-Jang-McDermott/master/data/clean_speeches.csv")
 
-# Make each row a word and remove stop words
-word_speeches <- speeches %>% 
-  unnest_tokens(word, text) %>% 
-  anti_join(stop_words)
-
-# Put word back into speech format - now each row is a speech
-clean_speeches <- word_speeches %>% 
-  nest(word) %>% 
-  mutate(text = map(data, unlist),
-         text = map_chr(text, paste, collapse = " ")) %>% 
-  select(country, year, context, text)
-
-ctry <<- list("China" = "CHN", "Ghana" = "GHA", "Phillipines" = "PHL", "Russia" = "RUS", "United States" = "USA", "South Africa" = "ZAF")
+ctry <<- list("China" = "CHN", "Ghana" = "GHA", "Philipines" = "PHL", "Russia" = "RUS", "United States" = "USA", "South Africa" = "ZAF")
 
 type_speech <<- list("UN General Debates" = "UNGD", "State of the Union" = "SOTU")
 
@@ -173,6 +162,7 @@ server <- function(input, output, session) {
 
 
 shinyApp(ui, server)
-
+runUrl("https://github.com/Glacieus/GOVT-696-Project-Jang-McDermott/blob/master/Wordcloud/Working%20Shiny.R.zip")
+runGitHub("GOVT-696-Project-Jang-McDermott", "Glacieus")
 
 
