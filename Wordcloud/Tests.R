@@ -4,23 +4,13 @@ library(wordcloud)
 library(memoise)
 library(tidyverse)
 library(tidytext)
+library(shinythemes)
+library(readr)
 
 # Global
-speeches <- read_csv("https://raw.githubusercontent.com/Glacieus/GOVT-696-Project-Jang-McDermott/master/data/speeches.csv")
+clean_speeches <- read_csv("https://raw.githubusercontent.com/Glacieus/GOVT-696-Project-Jang-McDermott/master/data/clean_speeches.csv")
 
-# Make each row a word and remove stop words
-word_speeches <- speeches %>% 
-  unnest_tokens(word, text) %>% 
-  anti_join(stop_words)
-
-# Put word back into speech format - now each row is a speech
-clean_speeches <- word_speeches %>% 
-  nest(word) %>% 
-  mutate(text = map(data, unlist),
-         text = map_chr(text, paste, collapse = " ")) %>% 
-  select(country, year, context, text)
-
-ctry <<- list("China" = "CHN", "Ghana" = "GHA", "Phillipines" = "PHL", "Russia" = "RUS", "United States" = "USA", "South Africa" = "ZAF")
+ctry <<- list("China" = "CHN", "Ghana" = "GHA", "Philipines" = "PHL", "Russia" = "RUS", "United States" = "USA", "South Africa" = "ZAF")
 
 type_speech <<- list("UN General Debates" = "UNGD", "State of the Union" = "SOTU")
 
@@ -66,14 +56,42 @@ getTermMatrix <- memoise(function(ctry, type_speech, minyear = 2000, maxyear = 2
   sort(rowSums(m), decreasing = T)
 })
 
+get_comp_comm <- function(ctry1, ctry2, type1, type2, minyear, maxyear){
+  cloud1 <- clean_speeches %>% 
+    filter(country == ctry1, context == type1, year >= minyear, year <= maxyear) %>% 
+    select(text)
+  
+  cloud2 <- clean_speeches %>% 
+    filter(country == ctry2, context == type2, year >= minyear, year <= maxyear) %>% 
+    select(text)
+  
+  combined <- cbind(cloud1, cloud2)
+  
+  docs <- Corpus(VectorSource(combined)) %>%
+    tm_map(removePunctuation) %>%
+    tm_map(removeNumbers) %>%
+    tm_map(tolower)  %>%
+    tm_map(removeWords, stopwords("english")) %>%
+    tm_map(stripWhitespace) %>%
+    tm_map(PlainTextDocument)
+  
+  tdm <- TermDocumentMatrix(docs) %>% 
+    as.matrix()
+  
+  colnames(tdm) <- c(paste(ctry1, type1, sep="_"), paste(ctry2, type2, sep = "_"))
+  
+  
+}
+
 
 # Define ui
 ui <- fluidPage(
+  theme = shinytheme("superhero"),
   # App title
   headerPanel("Speeches Wordclouds"),
   
-  plotOutput('plot', width = "100%"),
-  hr(),
+  plotOutput('plot', width = "auto", height = "auto"),
+  
   
   # Sidebar for inputs
   fluidRow(
@@ -156,19 +174,35 @@ server <- function(input, output, session) {
     })
   })
   
-  
-  
-  # Make the wordcloud drawing predictable during a session
-  wordcloud_rep <- repeatable(wordcloud)
-  
-  output$plot <- renderPlot({
-    v <- terms()
-    wordcloud_rep(names(v), v, scale=c(4,0.5),
-                  min.freq = input$freq, max.words=input$max,
-                  colors=brewer.pal(8, "Dark2"))
-  })
-}
-
-
-shinyApp(ui, server)
-
+  terms2 <- reactive({
+    minyear <- input$yrs[1]
+    maxyear <- input$yrs[2]
+    req(input$selection)
+    req(input$yrs[1])
+    req(input$yrs[2])
+    input$update
+    isolate({
+      withProgress({
+        setProgress(message = "Processing corpus...")
+        get_comp_comm(input$selection, input$type, minyear, maxyear)
+      })
+      
+      
+      
+      # Make the wordcloud drawing predictable during a session
+      wordcloud_rep <- repeatable(wordcloud)
+      
+      output$plot <- renderPlot({
+        v <- terms()
+        wordcloud_rep(names(v), v, scale=c(5,1),
+                      min.freq = input$freq, max.words=input$max,
+                      colors=brewer.pal(8, "Set1"))
+      }, height = 700)
+    }
+    
+    
+    shinyApp(ui, server)
+    
+    
+    
+    

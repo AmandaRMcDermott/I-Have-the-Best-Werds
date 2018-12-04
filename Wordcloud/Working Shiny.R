@@ -56,6 +56,33 @@ getTermMatrix <- memoise(function(ctry, type_speech, minyear = 2000, maxyear = 2
   sort(rowSums(m), decreasing = T)
 })
 
+get_comp_comm <- function(ctry1, ctry2, type1, type2, minyear, maxyear){
+  cloud1 <- clean_speeches %>% 
+    filter(country == ctry1, context == type1, year >= minyear, year <= maxyear) %>% 
+    select(text)
+  
+  cloud2 <- clean_speeches %>% 
+    filter(country == ctry2, context == type2, year >= minyear, year <= maxyear) %>% 
+    select(text)
+  
+  combined <- cbind(cloud1, cloud2)
+  
+  docs <- Corpus(VectorSource(combined)) %>%
+    tm_map(removePunctuation) %>%
+    tm_map(removeNumbers) %>%
+    tm_map(tolower)  %>%
+    tm_map(removeWords, stopwords("english")) %>%
+    tm_map(stripWhitespace) %>%
+    tm_map(PlainTextDocument)
+  
+  tdm <- TermDocumentMatrix(docs) %>% 
+    as.matrix()
+  
+  colnames(tdm) <- c(paste(ctry1, type1, sep="_"), paste(ctry2, type2, sep = "_"))
+  
+  
+}
+
 
 # Define ui
 ui <- fluidPage(
@@ -124,8 +151,9 @@ ui <- fluidPage(
     
     # Main panel for displaying outputs
     mainPanel(
-      textOutput("type"),
-      textOutput("dates"))
+      tabsetPanel(tabs = "tabs",
+      tabPanel("Plot", plotOutput("plot"))
+    )
   )
 )
 
@@ -147,6 +175,19 @@ server <- function(input, output, session) {
     })
   })
   
+  terms2 <- reactive({
+    minyear <- input$yrs[1]
+    maxyear <- input$yrs[2]
+    req(input$selection)
+    req(input$yrs[1])
+    req(input$yrs[2])
+    input$update
+    isolate({
+      withProgress({
+        setProgress(message = "Processing corpus...")
+        get_comp_comm(input$selection, input$type, minyear, maxyear)
+  })
+  
   
   
   # Make the wordcloud drawing predictable during a session
@@ -162,7 +203,6 @@ server <- function(input, output, session) {
 
 
 shinyApp(ui, server)
-runUrl("https://github.com/Glacieus/GOVT-696-Project-Jang-McDermott/blob/master/Wordcloud/Working%20Shiny.R.zip")
-runGitHub("GOVT-696-Project-Jang-McDermott", "Glacieus")
+
 
 
