@@ -1,40 +1,36 @@
-library(shiny)
-library(tm)
-library(wordcloud)
-library(memoise)
-library(tidyverse)
-library(tidytext)
+clean_speeches <- read_csv("https://raw.githubusercontent.com/Glacieus/GOVT-696-Project-Jang-McDermott/master/data/clean_speeches.csv")
 
-# Global
-speeches <- read_csv("https://raw.githubusercontent.com/Glacieus/GOVT-696-Project-Jang-McDermott/master/data/speeches.csv")
-countries <<- list("China" = "CHN", "Ghana" = "GHN", "Phillipines" = "PHL", "Russia" = "RUS", "United States" = "USA", "South Africa" = "ZAF")
+ctry <<- list("China" = "CHN", "Ghana" = "GHA", "Philipines" = "PHL", "Russia" = "RUS", "United States" = "USA", "South Africa" = "ZAF")
 
+type_speech <<- list("UN General Debates" = "UNGD", "State of the Union" = "SOTU")
 
-# Make each row a word and remove stop words
-word_speeches <- speeches %>% 
-  unnest_tokens(word, text) %>% 
-  anti_join(stop_words)
-
-# Put word back into speech format - now each row is a speech
-clean_speeches <- word_speeches %>% 
-  nest(word) %>% 
-  mutate(text = map(data, unlist),
-         text = map_chr(text, paste, collapse = " ")) %>% 
-  select(country, year, context, text)
-
-
-#countries <<- list("China" = clean_speeches$country[clean_speeches$country == "CHN"], "Ghana" = clean_speeches$country[clean_speeches$country == "GHN"],"Phillipines" = clean_speeches$country[clean_speeches$country == "PHL"],"Russia" = clean_speeches$country[clean_speeches$country == "RUS"],"United States" = clean_speeches$country[clean_speeches$country == "USA"],"South Africa" = clean_speeches$country[clean_speeches$country == "ZAF"])
+minyear <<- 1913:2018
+maxyear <<- 1913:2018
 
 
 # Cache the results
-getTermMatrix <- memoise(function(ctry) {
-  #if (!(country %in% countries))
-  #stop("Unkown country")
-  myCorpus = Corpus(VectorSource(clean_speeches$text[clean_speeches$country == ctry]))
-  #myCorpus = tm_map(myCorpus, content_transformer(tolower))
-  #myCorpus = tm_map(myCorpus, removePunctuation)
-  #myCorpus = tm_map(myCorpus, removeNumbers)
-  #myCorpus = tm_map(myCorpus, stripWhitespace)
+getTermMatrix <- memoise(function(ctry, type_speech, minyear = 2000, maxyear = 2018){
+  if(missing(type_speech)){
+    text <- clean_speeches %>% 
+      filter(country == ctry, year >= minyear, year <= maxyear) %>% 
+      select(text)
+  }
+  if(missing(minyear)){
+    text <- clean_speeches %>% 
+      filter(country == ctry, year >= 2000, year <= maxyear) %>% 
+      select(text)
+  }
+  if(missing(maxyear)){
+    text <- clean_speeches %>% 
+      filter(country == ctry, year >= minyear, year <= 2018) %>% 
+      select(text)
+  }
+  else{
+    text <- clean_speeches %>%
+      filter(country == ctry, context == type_speech, year >= minyear, year <= maxyear) %>% 
+      select(text)}
+  
+  myCorpus = Corpus(VectorSource(text))
   
   myDTM = TermDocumentMatrix(
     myCorpus,
@@ -42,62 +38,74 @@ getTermMatrix <- memoise(function(ctry) {
       minWordLength = 1,
       wordLengths = c(0, Inf),
       removePunctuation = TRUE,
-      removeNumbers = TRUE
+      removeNumbers = TRUE, stopwords = TRUE
     ))
-    #myDTM = removeSparseTerms(myDTM, 0.9)
-    
-    m = as.matrix(myDTM)
-    
-    sort(rowSums(m), decreasing = T)
+  
+  m = as.matrix(myDTM)
+  
+  sort(rowSums(m), decreasing = T)
 })
 
 
-# Define ui
-ui <- fluidPage(
-  # App title
-  headerPanel("Speeches Wordclouds"),
-  
-  # Sidebar for inputs
-  sidebarPanel(
-    selectInput("select", "Choose a country:",
-                choices = countries),
-    actionButton("update", "Change"),
-    hr(),
-    sliderInput("freq",
-                "Min Freq:",
-                min = 1, max = 50, value = 15),
-    sliderInput("max",
-                "Max Number of Words:",
-                min = 1, max = 300, value = 100)
-  ),
-  
-  # Main panel for displaying outputs
-  mainPanel(
-    plotOutput("plot")
-  )
-)
-
-# Server
-server <- function(input, output) {
-  terms <- reactive({
-    input$update
-    isolate({
-      withProgress({
-        setProgress(message = "Processing corpus...")
-        getTermMatrix(countries[input$selection])
-        #req(countries[input$selection])
-      })
-    })
-  })
-  
-  wordcloud_rep <- repeatable(wordcloud)
-  
-  output$plot <- renderPlot({
-    v <- terms()
-    wordcloud_rep(names(v), v, scale = c(4, 0.5),
-                  min.freq = input$freq, max.words = input$max, 
-                  colors = brewer.pal(8, "Dark2"))
-  })
+get_comp_comm <- function(ctry, ctry2, type_speech, type_speech2 = "UNGD", minyear = 2000, maxyear = 2018){
+  if(missing(ctry)){
+    print("Please enter Country 1")
+    if(missing(ctry2))
+      print("Please enter Country 2")
+  }
+  else{
+    cloud1 <- clean_speeches %>% 
+      filter(country == ctry, context == type_speech, year >= minyear, year <= maxyear) %>% 
+      select(text)
+    
+    cloud2 <- clean_speeches %>% 
+      filter(country == ctry2, context == type_speech2, year >= minyear, year <= maxyear) %>% 
+      select(text)
+    
+    pt1 <- Corpus(VectorSource(cloud1))
+    pt2 <- Corpus(VectorSource(cloud2))
+    
+    myDTM1 = TermDocumentMatrix(
+      pt1,
+      control = list(
+        minWordLength = 1,
+        wordLengths = c(0, Inf),
+        removePunctuation = TRUE,
+        removeNumbers = TRUE, stopwords = TRUE
+      ))
+    
+    myDTM2 = TermDocumentMatrix(
+      pt2,
+      control = list(
+        minWordLength = 1,
+        wordLengths = c(0, Inf),
+        removePunctuation = TRUE,
+        removeNumbers = TRUE, stopwords = TRUE
+      ))
+    
+    tdm1 <- myDTM1 %>% 
+      as.matrix() 
+    
+    tdm2 <- myDTM2 %>% 
+      as.matrix()
+    
+    tdm10 <- sort(rowSums(tdm1), decreasing = T)
+    tdm20 <- sort(rowSums(tdm2), decreasing = T)
+    
+    df1 <- rownames_to_column(as.data.frame(tdm10))
+    df2 <- rownames_to_column(as.data.frame(tdm20))
+    
+    full_df <- full_join(df1, df2) %>% 
+      mutate(tdm10 = replace_na(tdm10, 0)) %>% 
+      mutate(tdm20 = replace_na(tdm20, 0))
+    
+    tdm <- as.matrix(column_to_rownames(full_df))
+    
+    name1 <- paste(ctry, type_speech, sep = "-")
+    name2 <- paste(ctry2, type_speech2, sep = "-")
+    
+    colnames(tdm) <- c(name1, name2)
+    #par(mfrow = c(1, 2))
+    tdm
+  }
 }
-
-shinyApp(ui, server)

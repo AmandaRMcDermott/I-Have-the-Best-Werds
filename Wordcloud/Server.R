@@ -1,31 +1,65 @@
-library(shiny)
-library(tm)
-library(wordcloud)
-library(memoise)
-library(tidyverse)
-library(tidytext)
-
-
-# Server
-server <- function(input, output) {
+function(input, output, session) {
+  # Define a reactive expression for the document term matrix
   terms <- reactive({
+    minyear <- input$yrs[1]
+    maxyear <- input$yrs[2]
+    req(input$selection)
+    req(input$yrs[1])
+    req(input$yrs[2])
     input$update
     isolate({
       withProgress({
         setProgress(message = "Processing corpus...")
-        getTermMatrix(countries[input$selection])
-        req(countries[input$selection])
+        getTermMatrix(input$selection, input$type, minyear, maxyear)
       })
     })
   })
+  
+  terms2 <- reactive({
+    req(input$selection3)
+    req(input$selection4)
+    minyear <- input$yrs2[1]
+    maxyear <- input$yrs2[2]
+    req(input$type3)
+    req(input$type4)
+    req(input$yrs2[1])
+    req(input$yrs2[2])
+    input$update
+    isolate({
+      withProgress({
+        setProgress(message = "Processing corpus...")
+        get_comp_comm(input$selection3, input$selection4, input$type3, input$type4, minyear, maxyear)
+      })
+    })
+  })
+  
+  
+  # Make the wordcloud drawing predictable during a session
   wordcloud_rep <- repeatable(wordcloud)
+  wordcloud_comp_rep <- repeatable(comparison.cloud)
   
   output$plot <- renderPlot({
     v <- terms()
-    wordcloud_rep(names(v), v, scale = c(4, 0.5),
-                  min.freq = input$freq, max.words = input$max, 
-                  colors = brewer.pal(8, "Dark2"))
-  })
+    wordcloud_rep(
+      names(v),
+      v,
+      scale = c(5, 1),
+      min.freq = input$freq,
+      max.words = input$max,
+      colors = brewer.pal(8, "Set1")
+    )
+  }, height = 700)
+  
+  
+  output$plot2 <- renderPlot({
+    v2 <- terms2()
+    wordcloud_comp_rep(
+      v2,
+      scale = c(3, 1),
+      min.freq = input$freq2,
+      max.words = input$max2,
+      #title.size = 1.5,
+      colors = c("#6600CC", "red")
+    )
+  }, height = 525)
 }
-
-shinyApp(ui, server)
