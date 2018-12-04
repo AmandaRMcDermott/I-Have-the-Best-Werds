@@ -1,3 +1,12 @@
+library(shiny)
+library(tm)
+library(wordcloud)
+library(memoise)
+library(tidyverse)
+library(tidytext)
+library(shinythemes)
+library(readr)
+
 function(input, output, session) {
   # Define a reactive expression for the document term matrix
   terms <- reactive({

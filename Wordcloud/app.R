@@ -256,10 +256,10 @@ ui <- navbarPage(
         h5(helpText("Years available for South Africa:")),
         h6(helpText("UNGD: 1970-2017"),
            helpText("SOTU: 1990, 1994-2018"))
-        )
       )
     )
   )
+)
 )
 
 
@@ -315,7 +315,7 @@ server <- function(input, output, session) {
     )
   }, height = 700)
   
-
+  
   output$plot2 <- renderPlot({
     v2 <- terms2()
     wordcloud_comp_rep(
@@ -329,8 +329,10 @@ server <- function(input, output, session) {
   }, height = 525)
 }
 
+runGitHub("Glacieus/GOVT-696-Project-Jang-McDermott/Wordcloud", "Glacieus")
 
 shinyApp(ui, server)
+runApp("app.R")
 
-runGitHub( "GOVT-696-Project-Jang-McDermott/Wordcloud", "Glacieus")
+
 
