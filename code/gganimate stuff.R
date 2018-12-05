@@ -17,7 +17,7 @@ speech_words <- clean_speeches%>%
 
 
 total_speech_words <- speech_words %>% 
-  group_by(country, year, context) %>% 
+  group_by(country, year, context, word) %>% 
   summarize(total = sum(n))
 
 country_words <- left_join(speech_words, total_speech_words)
@@ -32,6 +32,15 @@ speech_tf <- country_words  %>%
 
 speech_tf$SOTU[is.na(speech_tf$SOTU)] <- 0
 speech_tf$UNGD[is.na(speech_tf$UNGD)] <- 0
+
+speech_tf1 <- speech_tf %>% 
+  select(country, year, word, SOTU)
+
+speech_tf2 <- speech_tf %>% 
+  select(country, year, word, UNGD)
+
+peak <- speech_tf1 %>% 
+  left_join(speech_tf2)
 
 temp <- subset(speech_tf, country == "CHN" & year == "2007" & word == "improve")
 
