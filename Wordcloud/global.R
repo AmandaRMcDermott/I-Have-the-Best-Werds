@@ -9,8 +9,8 @@ library(readr)
 
 clean_speeches <- read_csv("https://raw.githubusercontent.com/Glacieus/GOVT-696-Project-Jang-McDermott/master/data/clean_speeches.csv")
 
-ctry <<- list("China" = "CHN", "Ghana" = "GHA", "Philipines" = "PHL", "Russia" = "RUS", "United States" = "USA", "South Africa" = "ZAF")
-ctry2 <<- list("United States" = "USA", "China" = "CHN", "Ghana" = "GHA", "Philipines" = "PHL", "Russia" = "RUS", "South Africa" = "ZAF")
+ctry <<- list("China" = "CHN", "Ghana" = "GHA", "Philippines" = "PHL", "Russia" = "RUS", "United States" = "USA", "South Africa" = "ZAF")
+ctry2 <<- list("United States" = "USA", "China" = "CHN", "Ghana" = "GHA", "Philippines" = "PHL", "Russia" = "RUS", "South Africa" = "ZAF")
 
 type_speech <<- list("UN General Debates" = "UNGD", "State of the Union" = "SOTU")
 type_speech2 <<- list("UN General Debates" = "UNGD", "State of the Union" = "SOTU")

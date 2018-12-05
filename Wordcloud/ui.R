@@ -47,7 +47,7 @@ navbarPage(
         h6(helpText("UNGD: 1970-2017"),
            helpText("SOTU: 2008, 2011-2018")),
         
-        h5(helpText("Years available for the Phillipines:")),
+        h5(helpText("Years available for the Philippines:")),
         h6(helpText("UNGD: 1970-2017"),
            helpText("SOTU: 1935-2018")),
         
@@ -117,7 +117,7 @@ navbarPage(
         h6(helpText("UNGD: 1970-2017"),
            helpText("SOTU: 2008, 2011-2018")),
         
-        h5(helpText("Years available for the Phillipines:")),
+        h5(helpText("Years available for the Philippines:")),
         h6(helpText("UNGD: 1970-2017"),
            helpText("SOTU: 1935-2018")),
         
