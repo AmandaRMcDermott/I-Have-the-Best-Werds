@@ -1,3 +1,14 @@
+library(tidyverse)
+library(tidytext)
+library(tm)
+library(stringr)
+library(textmineR)
+library(gganimate)
+library(tweenr)
+library(wordcloud)
+library(reshape2)
+library(memoise)
+
 speech_words <- clean_speeches%>% 
   unnest_tokens(word, text) %>% 
   count(country, year, context, word, sort = T) %>% 
