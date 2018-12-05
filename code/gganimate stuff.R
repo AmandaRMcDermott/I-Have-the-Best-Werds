@@ -2,62 +2,153 @@ library(tidyverse)
 library(tidytext)
 library(tm)
 library(stringr)
-library(textmineR)
 library(gganimate)
-library(tweenr)
-library(wordcloud)
-library(reshape2)
-library(memoise)
+
 
 speech_words <- clean_speeches%>% 
   unnest_tokens(word, text) %>% 
-  count(country, year, context, word, sort = T) %>% 
-  ungroup() %>% 
-  inner_join(get_sentiments("afinn"), by = c(word = "word"))
+  count(country, year, context, word, sort = T)
 
 
 total_speech_words <- speech_words %>% 
-  group_by(country, year, context, word) %>% 
+  group_by(country, year, context) %>% 
   summarize(total = sum(n))
 
 country_words <- left_join(speech_words, total_speech_words)
 
-clean_speeches %>% 
-  spread(context, key = context1, value = context2)
+#clean_speeches %>% 
+#  spread(context, key = context1, value = context2)
 
 
 speech_tf <- country_words  %>% 
   bind_tf_idf(word, country, n) %>% 
   spread(key = context, value = tf)
 
-speech_tf$SOTU[is.na(speech_tf$SOTU)] <- 0
-speech_tf$UNGD[is.na(speech_tf$UNGD)] <- 0
+test <-speech_tf %>% 
+  gather(context, tf, SOTU:UNGD)
+test <- subset(test, !is.na(tf))
+test1 <- subset(test, context == "SOTU")
+test2 <- subset(test, context == "UNGD")
 
-speech_tf1 <- speech_tf %>% 
-  select(country, year, word, SOTU)
+test3 <- test1 %>% left_join(test2, by = c("country", "year", "word"))
+test3 <- subset(test3, !is.na(tf.y))
 
-speech_tf2 <- speech_tf %>% 
-  select(country, year, word, UNGD)
+test4 <- test3 %>% 
+  left_join(economic_sentiment)
+test4 <- subset(test4, !is.na(sentiment))
 
-peak <- speech_tf1 %>% 
-  left_join(speech_tf2)
+test5 <- test3 %>% 
+  left_join(economic_sentiment)
+test5$sentiment[is.na(test5$sentiment)]<- "none"
 
-temp <- subset(speech_tf, country == "CHN" & year == "2007" & word == "improve")
-
-
-p1 <- speech_tf %>% 
-  filter(country == "CHN") %>% 
-  ggplot(., aes(y = SOTU, x = UNGD, color = country)) +
-  #geom_text(aes(label = word), size = 3, hjust = -0.15) +
+p1 <- test4 %>% 
+  filter(country == "PHL") %>% 
+  ggplot(., aes(y = log(tf.y), x = log(tf.x), color = sentiment)) +
+  geom_text(aes(label = word), size = 3, hjust = -0.15) +
   geom_point(alpha = 0.5, show.legend = F) +
+  geom_abline(slope = 1, intercept = 0) +
   geom_jitter() +
-  facet_grid(context ~ country) +
-  labs(title = 'Year: {frame_time}', x = 'count', y = 'total frequency') +
+  ggtitle("Philippines") +
+  facet_grid(country ~ .) +
+  labs(title = 'Year: {frame_time}', x = 'SOTU Frequency', y = 'UNGD Frequnecy') +
   transition_time(year) +
   ease_aes('linear')
 
-animate(p1)
+animate(p1, fps = 2)
 
+p1 <- test5 %>% 
+  filter(country == "PHL") %>% 
+  ggplot(., aes(y = log(tf.y), x = log(tf.x), color = sentiment)) +
+  geom_text(aes(label = word), size = 3, hjust = -0.15) +
+  geom_point(alpha = 0.5, show.legend = F) +
+  geom_abline(slope = 1, intercept = 0) +
+  geom_jitter() +
+  ggtitle("Philippines") +
+  facet_grid(country ~ .) +
+  labs(title = 'Year: {frame_time}', x = 'SOTU Frequency', y = 'UNGD Frequnecy') +
+  transition_time(year) +
+  ease_aes('linear')
+
+animate(p1, fps = 2)
+
+p1 <- test4 %>% 
+  filter(country == "CHN") %>% 
+  ggplot(., aes(y = log(tf.y), x = log(tf.x), color = sentiment)) +
+  geom_text(aes(label = word), size = 3, hjust = -0.15) +
+  geom_point(alpha = 0.5, show.legend = F) +
+  geom_abline(slope = 1, intercept = 0) +
+  geom_jitter() +
+  ggtitle("Philippines") +
+  facet_grid(country ~ .) +
+  labs(title = 'Year: {frame_time}', x = 'SOTU Frequency', y = 'UNGD Frequnecy') +
+  transition_time(year) +
+  ease_aes('linear')
+
+animate(p1, fps = 2)
+
+p1 <- test4 %>% 
+  filter(country == "USA") %>% 
+  ggplot(., aes(y = log(tf.y), x = log(tf.x), color = sentiment)) +
+  geom_text(aes(label = word), size = 3, hjust = -0.15) +
+  geom_point(alpha = 0.5, show.legend = F) +
+  geom_abline(slope = 1, intercept = 0) +
+  geom_jitter() +
+  ggtitle("Philippines") +
+  facet_grid(country ~ .) +
+  labs(title = 'Year: {frame_time}', x = 'SOTU Frequency', y = 'UNGD Frequnecy') +
+  transition_time(year) +
+  ease_aes('linear')
+
+animate(p1, fps = 2)
+
+p1 <- test4 %>% 
+  filter(country == "ZAF") %>% 
+  ggplot(., aes(y = log(tf.y), x = log(tf.x), color = sentiment)) +
+  geom_text(aes(label = word), size = 3, hjust = -0.15) +
+  geom_point(alpha = 0.5, show.legend = F) +
+  geom_abline(slope = 1, intercept = 0) +
+  geom_jitter() +
+  ggtitle("Philippines") +
+  facet_grid(country ~ .) +
+  labs(title = 'Year: {frame_time}', x = 'SOTU Frequency', y = 'UNGD Frequnecy') +
+  transition_time(year) +
+  ease_aes('linear')
+
+animate(p1, fps = 2)
+
+p1 <- test4 %>% 
+  filter(country == "GHA") %>% 
+  ggplot(., aes(y = log(tf.y), x = log(tf.x), color = sentiment)) +
+  geom_text(aes(label = word), size = 3, hjust = -0.15) +
+  geom_point(alpha = 0.5, show.legend = F) +
+  geom_abline(slope = 1, intercept = 0) +
+  geom_jitter() +
+  ggtitle("Philippines") +
+  facet_grid(country ~ .) +
+  labs(title = 'Year: {frame_time}', x = 'SOTU Frequency', y = 'UNGD Frequnecy') +
+  transition_time(year) +
+  ease_aes('linear')
+
+animate(p1, fps = 2)
+
+p1 <- test4 %>% 
+  filter(country == "RUS") %>% 
+  ggplot(., aes(y = log(tf.y), x = log(tf.x), color = sentiment)) +
+  geom_text(aes(label = word), size = 3, hjust = -0.15) +
+  geom_point(alpha = 0.5, show.legend = F) +
+  geom_abline(slope = 1, intercept = 0) +
+  geom_jitter() +
+  ggtitle("Philippines") +
+  facet_grid(country ~ .) +
+  labs(title = 'Year: {frame_time}', x = 'SOTU Frequency', y = 'UNGD Frequnecy') +
+  transition_time(year) +
+  ease_aes('linear')
+
+animate(p1, fps = 2)
+
+
+
+###Amanda old stuff, don't delete maybe?
 p2 <- speech_tf %>% 
   filter(country == "RUS", context == "UNGD") %>% 
   ggplot(., aes(y = tf, x = n, color = country)) 
