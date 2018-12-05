@@ -2,16 +2,12 @@ library(tidyverse)
 library(dplyr)
 library(tidytext)
 library(ggthemes)
-get_sentiments("bing")
 get_sentiments("afinn")
 
 ###Sentiment Analysis
 words <- clean_speeches %>% 
   unnest_tokens(word, text) %>% 
   anti_join(stop_words)
-
-words$length <- NA
-words$length <- nchar(words$word)
 
 #####Word Counts
 counted <- words %>%    
@@ -84,15 +80,19 @@ boxplot(SOTU_sentiments_pn$sentiment, UNGD_sentiments_pn$sentiment)
 boxplot(SOTU_sentiments_abs$sentiment, UNGD_sentiments_abs$sentiment)
 
 ###Economic stuff
+table(economic_sentiment$sentiment)
 economic_sentiment$econ <- 0
 economic_sentiment$econ[economic_sentiment$sentiment == "economic"] <- 1
 economic_sentiment$secu <- 0
 economic_sentiment$secu[economic_sentiment$sentiment == "security"] <- 1
 economic_sentiment$envi <- 0
 economic_sentiment$envi[economic_sentiment$sentiment == "environmental"] <- 1
+economic_sentiment$moral <- 0
+economic_sentiment$moral[economic_sentiment$sentiment == "moral"] <- 1
 economic_word <- economic_sentiment[,c(1,3)]
 security_word <- economic_sentiment[,c(1,4)]
 environment_word <- economic_sentiment[,c(1,5)]
+moral_word <- economic_sentiment[,c(1,6)]
 ###Security Analysis
 UNGD_security <- words %>% 
   filter(context == "UNGD") %>% 
@@ -145,6 +145,59 @@ SOTU_economics <- SOTU_economics %>%
 hist(SOTU_economics$econ)
 boxplot(SOTU_economics$econ, UNGD_economics$econ)
 
+###Environmental Analysis
+UNGD_enviro <- words %>% 
+  filter(context == "UNGD") %>% 
+  left_join(environment_word)
+
+UNGD_enviro$envi[is.na(UNGD_enviro$envi)] <- 0
+
+UNGD_enviro<- UNGD_enviro %>% 
+  count(index = year, country, envi) %>% 
+  spread(envi, n, fill = 0) %>% 
+  mutate(envi = `1`/(`0`+`1`))
+hist(UNGD_enviro$envi)
+
+SOTU_enviro <- words %>% 
+  filter(context == "SOTU") %>% 
+  left_join(environment_word)
+
+SOTU_enviro$envi[is.na(SOTU_enviro$envi)] <- 0
+
+SOTU_enviro<- SOTU_enviro %>% 
+  count(index = year, country, envi) %>% 
+  spread(envi, n, fill = 0) %>% 
+  mutate(envi = `1`/(`0`+`1`))
+hist(SOTU_enviro$envi)
+boxplot(SOTU_enviro$envi, UNGD_enviro$envi)
+t.test(SOTU_enviro$envi, UNGD_enviro$envi)
+
+###Moral Analysis
+UNGD_moral <- words %>% 
+  filter(context == "UNGD") %>% 
+  left_join(moral_word)
+
+UNGD_moral$moral[is.na(UNGD_moral$moral)] <- 0
+
+UNGD_moral<- UNGD_moral %>% 
+  count(index = year, country, moral) %>% 
+  spread(moral, n, fill = 0) %>% 
+  mutate(moral = `1`/(`0`+`1`))
+hist(UNGD_moral$moral)
+
+SOTU_moral <- words %>% 
+  filter(context == "SOTU") %>% 
+  left_join(moral_word)
+
+SOTU_moral$moral[is.na(SOTU_moral$moral)] <- 0
+
+SOTU_moral<- SOTU_moral %>% 
+  count(index = year, country, moral) %>% 
+  spread(moral, n, fill = 0) %>% 
+  mutate(moral = `1`/(`0`+`1`))
+hist(SOTU_moral$moral)
+boxplot(SOTU_moral$moral, UNGD_moral$moral)
+t.test(SOTU_moral$moral, UNGD_moral$moral)
 
 ####Creating a clean dataframe.
 reg.df <- clean_speeches[,c(1,2)]
@@ -156,18 +209,22 @@ var3 <- UNGD_sentiments_pn[,c(1,2,14)]
 var3 <- var3 %>% rename(year = index, ungd_sent_pn = sentiment)
 var4 <- UNGD_sentiments_abs[,c(1,2,14)]
 var4 <- var4 %>% rename(year = index, ungd_sent_ab = sentiment)
-var5 <- UNGD_wl[,c(1,2,3)]
-var5 <- var5 %>% rename(ungd_wl = avg_wl)
-var6 <- SOTU_wl[,c(1,2,3)]
-var6 <- var6 %>% rename(sotu_wl = avg_wl)
-var7 <- SOTU_economics[,c(1,2,5)]
-var7 <- var7 %>% rename(year = index, sotu_econ = econ)
-var8 <- UNGD_economics[,c(1,2,5)]
-var8 <- var8 %>% rename(year = index, ungd_econ = econ)
-var9 <- SOTU_security[,c(1,2,5)]
-var9 <- var9 %>% rename(year = index, sotu_secu = security)
-var10 <- UNGD_security[,c(1,2,5)]
-var10 <- var10 %>% rename(year = index, ungd_secu = security)
+var5 <- SOTU_economics[,c(1,2,5)]
+var5 <- var5 %>% rename(year = index, sotu_econ = econ)
+var6 <- UNGD_economics[,c(1,2,5)]
+var6 <- var6 %>% rename(year = index, ungd_econ = econ)
+var7 <- SOTU_security[,c(1,2,5)]
+var7 <- var7 %>% rename(year = index, sotu_secu = security)
+var8 <- UNGD_security[,c(1,2,5)]
+var8 <- var8 %>% rename(year = index, ungd_secu = security)
+var9 <- UNGD_moral[,c(1,2,5)]
+var9 <- var9 %>% rename(year = index, ungd_moral = moral)
+var10 <- SOTU_moral[,c(1,2,5)]
+var10 <- var10 %>% rename(year = index, sotu_moral = moral)
+var11 <- UNGD_enviro[,c(1,2,5)]
+var11 <- var11 %>% rename(year = index, ungd_enviro = envi)
+var12 <- SOTU_enviro[,c(1,2,5)]
+var12 <- var12 %>% rename(year = index, sotu_enviro = envi)
 reg.df <- reg.df %>% 
   left_join(var1) %>% 
   left_join(var2) %>% 
@@ -178,12 +235,14 @@ reg.df <- reg.df %>%
   left_join(var7) %>% 
   left_join(var8) %>% 
   left_join(var9) %>% 
-  left_join(var10)
+  left_join(var10) %>% 
+  left_join(var11) %>% 
+  left_join(var12)
 
 reg.df <- reg.df %>% 
   arrange(country, year)
 
 reg.df <- unique(reg.df)
 
-write_csv(reg.df, "JM.csv")
+write_csv(reg.df, "JM2.csv")
 
