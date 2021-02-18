@@ -1,0 +1,17 @@
+---
+title: "tm_tests"
+author: "Amanda McDermott"
+date: "2/17/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# Load libraries
+library(textmineR)
+library(data.table)
+```
+
+```{r}
+speeches <- fread("https://raw.githubusercontent.com/AmandaRMcDermott/I-Have-the-Best-Werds/master/data/speeches.csv")
+```
