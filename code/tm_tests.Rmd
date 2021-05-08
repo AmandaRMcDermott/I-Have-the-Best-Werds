@@ -10,8 +10,353 @@ knitr::opts_chunk$set(echo = TRUE)
 # Load libraries
 library(textmineR)
 library(data.table)
+library(tm)
+library(qdap)
+library(tribe)
+library(magrittr)
+library(widyr)
+library(gsl)              # Required for the topicmodels package
+library(stminsights)      # For visual exploration of STM
+library(caret)
+library(stm)
+library(furrr)
+library(ggthemes)
+library("quanteda.textstats")
+
+source("~/GitHub/I-Have-the-Best-Werds/code/functions/tm_functions.R")
 ```
 
 ```{r}
 speeches <- fread("https://raw.githubusercontent.com/AmandaRMcDermott/I-Have-the-Best-Werds/master/data/speeches.csv")
+
+head(speeches)
+```
+
+# Cleaning the Data
+```{r}
+# Grouping texts by Countries and Years
+speeches_group <- speeches %>% 
+  group_by(country,year,context) %>% 
+  summarize(text = str_c(text, collapse=" ")) %>% 
+  ungroup() %>% 
+  mutate(id = row_number())%>%
+  unnest_tokens(word, text, "ngrams", n = 1)%>%
+anti_join(get_stopwords("en"))%>%
+  group_by(id)%>%
+    summarize(text = str_c(word, collapse=" "))
+
+# Set to a data.table type
+setDT(speeches_group)
+
+# Clean up the text by:
+# lowercase
+# strip extra whitespace
+# remove numbers
+speeches_group[,text := tolower(text)][
+  ,text := removePunctuation(text)][
+    ,text := stripWhitespace(text)][
+      ,text := removeNumbers(text)]
+
+head(speeches_group)
+
+```
+
+# Make a dataframe that splits speeches by context and year, but groups countries together
+```{r}
+# Grouping texts by Countries and Years
+speeches_group2 <- speeches %>% 
+  group_by(year,context) %>% 
+  summarize(text = str_c(text, collapse=" ")) %>% 
+  ungroup() %>% 
+  mutate(id = row_number())
+
+# Set to a data.table type
+setDT(speeches_group2)
+
+# Clean up the text by:
+# lowercase
+# strip extra whitespace
+# remove numbers
+speeches_group2[,text := tolower(text)][
+  ,text := removePunctuation(text)][
+    ,text := stripWhitespace(text)][
+      ,text := removeNumbers(text)]
+
+head(speeches_group2)
+
+nchar(speeches_group2$text[1])
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+spch_corpus <- corpus(speeches_group,text_field = "text")
+summary(spch_corpus)
+
+# tokenize
+toks <- tokens(spch_corpus)
+col <- toks %>% 
+  tokens_remove(stopwords("en")) %>% 
+  tokens_select(pattern = "^[a-z]", valuetype = "regex",
+                case_insensitive = F, padding = T) %>% 
+  textstat_collocations(min_count = 5, tolower = F)
+  
+col
+```
+
+
+
+# Unigram probabilities
+```{r}
+unigram_probs <- speeches_group2 %>% 
+  #ungroup() %>% 
+  #slice(1:10) %>% 
+  unnest_tokens(word, text) %>% 
+  mutate(ngram_id = row_number()) %>% 
+  unite(skipgram_id, id, ngram_id) %>% 
+  unnest_tokens(word, ngram) %>% 
+  anti_join(stop_words)
+```
+
+# Skipgram probabilities
+```{r}
+skipgrams2 <- speeches_group2 %>% 
+  #ungroup() %>% 
+  #slice(1:10) %>% 
+  unnest_tokens(ngram, text, token = "ngrams", n = 8) %>% 
+  mutate(ngram_id = row_number()) %>% 
+  unite(skipgram_id, id, ngram_id) %>% 
+  unnest_tokens(word, ngram) %>% 
+  anti_join(stop_words)
+
+# get pairwise counts but excludes pairs repeating words
+# Get pct of time the biterm appears
+skipgram_probs2 <- skipgrams2 %>% 
+  #slice(1:200) %>% 
+  pairwise_count(word,skipgram_id, diag = T, sort = T) %>% 
+  filter(item1 != item2) %>% 
+  mutate(pct = n / sum(n))
+
+skipgram_probs2 %>% head() %>% mutate(pct = 100 * round(pct,4))
+```
+
+```{r}
+
+```
+
+# Creating DTM
+```{r}
+dtm <- CreateDtm(doc_vec = speeches_group$text,
+                 doc_names = speeches_group$id,
+                ngram_window = c(1,2),
+                verbose=T)
+
+dtm2 <- dtm[,colSums(dtm) > 2]
+
+tf <- TermDocFreq(dtm = dtm2)
+tf$term_freq > 2 & 
+```
+
+
+```{r}
+raw_essay_text <- toString(speeches_group$text[1])
+
+txt_dfm<-dfm(spch_corpus,
+    remove = stopwords("en"),
+    remove_punct = T,
+    stem = T,
+    verbose= F,
+    tolower= T)
+
+processed_text<- convert(txt_dfm, to = "stm", 
+                                   docvars = data.frame(speeches_group))
+```
+
+```{r}
+#Lines below prepare corpus for processing and analysis
+processed_out <- prepDocuments(processed_text$documents, 
+                             processed_text$vocab,
+                             processed_text$meta)
+processed_docs <- processed_out$documents
+processed_vocab <- processed_out$vocab
+processed_meta <- processed_out$meta
+```
+
+
+```{r}
+#Actual STM models in each line below. STM without covariates defaults to 
+# correlated topic models (CTM), which we use for our analysis.
+set.seed(1993)
+processed_fit <- stm(processed_docs, processed_vocab, K = 8,
+                   data = processed_meta,
+                   max.em.its = 9, init.type = "LDA", verbose = TRUE)
+```
+
+
+```{r}
+# Print top terms for each of the K topics. We use these to label the topics.
+labelTopics(processed_fit)
+
+#Lines below print the documents where topic k of K is the most prevalent. This
+# was used to help label topics.
+top_doc <- for(i in 1:30){
+  thought <- findThoughts(processed_fit,
+                          texts = speeches_group$text, n = 1,
+                          topics = i)$docs[[1]]
+  plot_top_doc <- substr(thought, 1, 300)
+  par(mfrow = c(1,2),mar = c(.5, .5, 1, .5))
+  plotQuote(plot_top_doc, width = 20,
+            main = paste("Top Essay for Topic  ", i))
+}
+
+searchK()
+```
+
+```{r}
+tidy_spch<-speeches_group %>%filter(context=="SOTU")%>%
+  unnest_tokens(word, text)%>%
+  anti_join(get_stopwords())%>%
+  add_count(word)%>%
+  filter(n>100)%>%
+  select(-n)
+
+spch_sparse<-tidy_spch%>%
+  count(country,year,context,id,word)%>%
+  cast_sparse(id,word,n)
+
+stm_mdls<-data_frame(K = seq(10,80, 10)) %>%
+  mutate(tm = future_map(K, ~stm(spch_sparse, K = ., verbose = F)))
+
+holdout<-make.heldout(spch_sparse)
+
+k_result <- stm_mdls%>%
+  mutate(exclusivity = map(tm, exclusivity),
+         semantic_coherence = map(tm, semanticCoherence, spch_sparse),
+         eval_heldout = map(tm, eval.heldout, holdout$missing),
+         residual = map(tm, checkResiduals, spch_sparse),
+         bound =  map_dbl(tm, function(x) max(x$convergence$bound)),
+         lfact = map_dbl(tm, function(x) lfactorial(x$settings$dim$K)),
+         lbound = bound + lfact,
+         iterations = map_dbl(tm, function(x) length(x$convergence$bound)))
+
+k_result %>%
+  transmute(K,
+            `Lower bound` = lbound,
+            Residuals = map_dbl(residual, "dispersion"),
+            `Semantic coherence` = map_dbl(semantic_coherence, mean),
+            `Held-out likelihood` = map_dbl(eval_heldout, "expected.heldout")) %>%
+  gather(Metric, Value, -K) %>%
+  ggplot(aes(K, Value, color = Metric)) +
+  geom_line(size = 1.5, alpha = 0.7, show.legend = FALSE) +
+  facet_wrap(~Metric, scales = "free_y") +
+  labs(x = "K (number of topics)",
+       y = NULL,
+       title = "Model diagnostics by number of topics",
+       subtitle = "These diagnostics indicate that a good number of topics would be around 60")
+
+topic_model <- k_result %>% 
+  filter(K == 40) %>% 
+  pull(tm) %>% 
+  .[[1]]
+
+td_beta <- tidy(topic_model)
+td_beta
+
+td_gamma <- tidy(topic_model, matrix = "gamma",
+                 document_names = rownames(spch_sparse))
+td_gamma
+```
+```{r}
+top_terms <- td_beta %>%
+  arrange(beta) %>%
+  group_by(topic) %>%
+  top_n(7, beta) %>%
+  arrange(-beta) %>%
+  select(topic, term) %>%
+  summarise(terms = list(term)) %>%
+  mutate(terms = map(terms, paste, collapse = ", ")) %>% 
+  unnest(cols=c(terms))
+
+gamma_terms <- td_gamma %>%
+  group_by(topic) %>%
+  summarise(gamma = mean(gamma)) %>%
+  arrange(desc(gamma)) %>%
+  left_join(top_terms, by = "topic") %>%
+  mutate(topic = paste0("Topic ", topic),
+         topic = reorder(topic, gamma))
+
+gamma_terms %>%
+  top_n(20, gamma) %>%
+  ggplot(aes(topic, gamma, label = terms, fill = topic)) +
+  geom_col(show.legend = FALSE) +
+  geom_text(hjust = 0, nudge_y = 0.0005, size = 3) +
+  coord_flip() +
+  scale_y_continuous(expand = c(0,0),
+                     limits = c(0, 0.09),
+                     labels = scales::percent_format()) +
+  theme_tufte(base_family = "IBMPlexSans", ticks = FALSE) +
+  theme(plot.title = element_text(size = 16,
+                                  family="IBMPlexSans-Bold"),
+        plot.subtitle = element_text(size = 13)) +
+  labs(x = NULL, y = expression(gamma),
+       title = "Top 20 topics by prevalence in the Hacker News corpus",
+       subtitle = "With the top words that contribute to each topic")
+```
+
+```{r}
+k_result %>%
+  select(K, exclusivity, semantic_coherence) %>%
+  filter(K %in% c(10,20,40,60,80)) %>%
+  unnest() %>%
+  mutate(K = as.factor(K)) %>%
+  ggplot(aes(semantic_coherence, exclusivity, color = K)) +
+  geom_point(size = 2, alpha = 0.7) +
+  geom_smooth(se=F,method="lm")+
+  labs(x = "Semantic coherence",
+       y = "Exclusivity",
+       title = "Comparing exclusivity and semantic coherence",
+       subtitle = "Models with fewer topics have higher semantic coherence for more topics, but lower exclusivity")
+
+
+```
+
+
+```{r}
+stm_mdls2<-stm(spch_sparse, K = 60, verbose = T)
+
+holdout2<-make.heldout(spch_sparse2)
+
+exclusivity(stm_mdls2)
+k_result2 <- stm_mdls2%>%
+  mutate(exclusivity = exclusivity),
+         semantic_coherence = map(tm, semanticCoherence, spch_sparse),
+         eval_heldout = map(tm, eval.heldout, holdout2$missing),
+         residual = map(tm, checkResiduals, spch_sparse),
+         bound =  map_dbl(tm, function(x) max(x$convergence$bound)),
+         lfact = map_dbl(tm, function(x) lfactorial(x$settings$dim$K)),
+         lbound = bound + lfact,
+         iterations = map_dbl(tm, function(x) length(x$convergence$bound)))
+```
+
+```{r}
+library(text2vec)
+tokens <- word_tokenizer(speeches_group$text)
+it <- itoken(tokens, ids = speeches_group$id)
+v <- create_vocabulary(it)
+#setDT(v)[order(-term_count)]
+v <- prune_vocabulary(v, term_count_min = 5,term_count_max = 193980)
+model = Collocations$new(collocation_count_min = 5, pmi_min = 5)
+model$fit(it, n_iter = 2)
+model$collocation_stat
+
+it2 = model$transform(it)
+v2 = create_vocabulary(it2)
+v2 <- prune_vocabulary(v2, term_count_min = 5,term_count_max = 193980)
+setDT(v2)[str_detect(term,"_")==T,][order(-term_count)]
+setdiff(v2$term, v$term)
+
 ```
