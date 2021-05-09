@@ -10,7 +10,15 @@ input_arguments <- list(
 
 # Receiving input from function arguments
     # If no arguments are passed, the value here is `list()`
-arguments <- shiny::getShinyOption("corporaexplorer_input_arguments")
+#arguments <- shiny::getShinyOption("corporaexplorer_input_arguments")
+arguments <- list(
+    search_terms = NA,  # TODO this works, but I would like something more intuitive
+    highlight_terms = "",
+    filter_terms = "",
+    case_sensitivity = FALSE,
+    extra_chart_terms = "",
+    extra_subset_terms = ""
+)
 
 # Replacing default input values with values passed from function call (if any)
 input_arguments[names(arguments)] <- arguments

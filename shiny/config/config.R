@@ -1,7 +1,8 @@
+
 # Data set-up -------------------------------------------------------------
 
 #loaded_data <- getShinyOption("corporaexplorer_data")
-loaded_data<-corporaexplorer::prepare_data(sotu::sotu_text)
+loaded_data<<-corporaexplorer::prepare_data(sotu::sotu_text)
 
 source("./shiny/config/backwards_compatibility.R", local = TRUE)
 
@@ -12,7 +13,7 @@ source("./shiny/config/config_convenience_functions.R", local = TRUE)
 
 # From corporaexplorerobject --------------------------------------------
 
-DATE_BASED_CORPUS <- loaded_data$date_based_corpus
+DATE_BASED_CORPUS <<- loaded_data$date_based_corpus
 
 contains_grouping_variable <-
     !is.null(loaded_data$original_data$grouping_variable)
@@ -78,14 +79,16 @@ USE_ONLY_RE2R <- FALSE
 
 # UI options from function arguments --------------------------------------
 
-ui_options <- shiny::getShinyOption("corporaexplorer_ui_options")
+#ui_options <- shiny::getShinyOption("corporaexplorer_ui_options")
+ui_options <- ui_options <- shiny::getShinyOption("corporaexplorer_ui_options")
 
 ## At the moment only css arguments here.
 
 # Plot options from function arguments ------------------------------------
 
-plot_options <- shiny::getShinyOption("corporaexplorer_plot_options")
-
+#plot_options <- shiny::getShinyOption("corporaexplorer_plot_options")
+plot_options <- list(max_docs_in_wall_view = 12001,colours = c("gray", "green"))
+     
 PLOT_SIZE_FACTOR <- 15
 if (!is.null(plot_options$plot_size_factor)) {
     if (is.numeric(plot_options$plot_size_factor)) {

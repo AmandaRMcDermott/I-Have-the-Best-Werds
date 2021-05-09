@@ -1,3 +1,9 @@
+# Libraries ---------------------------------------------------------------
+require(shiny)
+require(tidyverse)
+
+
+
 
 # Function files ----------------------------------------------------------
 source("./shiny/global/function_display_document.R", local = TRUE)

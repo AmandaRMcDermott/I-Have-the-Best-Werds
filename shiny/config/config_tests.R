@@ -4,9 +4,9 @@ library(corporaexplorer)
 
 # Data set-up -------------------------------------------------------------
 
-loaded_data <- corporaexplorer::test_data
+loaded_data <<- corporaexplorer::test_data
 
-source("./shiny/config/backwards_compatibility.R", local = TRUE)  # TODO should noe be ncessary in tests.
+source("./shiny/config/backwards_compatibility.R", local = TRUE)  # TODO should not be ncessary in tests.
 
 # Constants ---------------------------------------------------------------
 
@@ -14,7 +14,7 @@ source("./shiny/config/constants.R", local = TRUE)
 
 # From corporaexplorerobject --------------------------------------------
 
-DATE_BASED_CORPUS <- loaded_data$date_based_corpus
+DATE_BASED_CORPUS <<- loaded_data$date_based_corpus
 # To decide if to display x-axis label in plot:
 ONLY_ONE_GROUP_IN_NON_DATE_BASED_CORPUS <- is.null(loaded_data$original_data$grouping_variable) & DATE_BASED_CORPUS == FALSE
 
@@ -58,7 +58,7 @@ MY_COLOURS <- rep(MAIN_COLOURS, 10)
 
 # Extra boolean from function arguments -----------------------------------
 
-INCLUDE_EXTRA <- FALSE
+INCLUDE_EXTRA <<- FALSE
 
 # Start-up plot size ------------------------------------------------------
 
