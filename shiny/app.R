@@ -1,7 +1,7 @@
 # Libraries ---------------------------------------------------------------
 require(shiny)
 require(tidyverse)
-
+require(cicerone)
 
 
 
@@ -17,6 +17,7 @@ source("./shiny/global/function_visualise_corpus.R", local = TRUE)
 source("./shiny/global/function_visualise_document.R", local = TRUE)
 source("./shiny/global/functions_info.R", local = TRUE)
 source("./shiny/global/functions_main_search_engine.R", local = TRUE)
+source('./shiny/global/function_app_guide.R', local = TRUE)
 
 # Setting up data and config ----------------------------------------------
 if (!is.null(getOption("shiny.testmode"))) {
@@ -32,7 +33,9 @@ if (!is.null(getOption("shiny.testmode"))) {
 #=============================================================================#
 
 ui <- function(request) {
+  
   shinydashboard::dashboardPage(
+    
     title = 'Corpus exploration',
     
     # Header --------------------------------------------------------------
@@ -44,6 +47,20 @@ ui <- function(request) {
     # Body ----------------------------------------------------------------
     
     shinydashboard::dashboardBody(
+      
+    #   tags$head(tags$style(HTML('
+    #   .modal.in .modal-dialog{
+    #     width:100%;
+    #     height:100%;
+    #     margin:60px;
+    #   }
+    # 
+    #   .modal-content{
+    #     width:50%;
+    #     height:50%;
+    #   }
+    # '))),
+      
       # CSS and JS files --------------------------------------------------
       source("./shiny/ui/css_js_import.R", local = TRUE)$value,
       source("./shiny/ui/css_from_arguments.R", local = TRUE)$value,
@@ -79,6 +96,22 @@ ui <- function(request) {
 #=============================================================================#
 
 server <- function(input, output, session) {
+  # set.seed(122)
+  # histdata <- rnorm(500)
+  # observeEvent(once = TRUE,ignoreNULL = FALSE, ignoreInit = FALSE, eventExpr = histdata, {
+  #   # event will be called when histdata changes, which only happens once, when it is initially calculated
+  # 
+  #   showModal(modalDialog(
+  #     title = "Landing Page",
+  #     h1('Landing Page'),
+  #     p('Theoretically you can put whatever content you want in here')
+  #   ))
+  # 
+  # 
+  # })
+  
+  # initialise then start the guide
+  guide$init()$start()
   
   # Session scope function files --------------------------------------------
   source("./shiny/server/functions_collect_input_terms.R", local = TRUE)
