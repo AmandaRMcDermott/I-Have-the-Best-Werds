@@ -32,8 +32,8 @@ if (!is.null(getOption("shiny.testmode"))) {
 ####================================  UI  =================================####
 #=============================================================================#
 
-ui <- function(request) {
-  
+ui <- function(id) {
+
   shinydashboard::dashboardPage(
     
     title = 'Corpus exploration',
@@ -48,18 +48,6 @@ ui <- function(request) {
     
     shinydashboard::dashboardBody(
       
-    #   tags$head(tags$style(HTML('
-    #   .modal.in .modal-dialog{
-    #     width:100%;
-    #     height:100%;
-    #     margin:60px;
-    #   }
-    # 
-    #   .modal-content{
-    #     width:50%;
-    #     height:50%;
-    #   }
-    # '))),
       
       # CSS and JS files --------------------------------------------------
       source("./shiny/ui/css_js_import.R", local = TRUE)$value,
@@ -96,19 +84,6 @@ ui <- function(request) {
 #=============================================================================#
 
 server <- function(input, output, session) {
-  # set.seed(122)
-  # histdata <- rnorm(500)
-  # observeEvent(once = TRUE,ignoreNULL = FALSE, ignoreInit = FALSE, eventExpr = histdata, {
-  #   # event will be called when histdata changes, which only happens once, when it is initially calculated
-  # 
-  #   showModal(modalDialog(
-  #     title = "Landing Page",
-  #     h1('Landing Page'),
-  #     p('Theoretically you can put whatever content you want in here')
-  #   ))
-  # 
-  # 
-  # })
   
   # initialise then start the guide
   guide$init()$start()

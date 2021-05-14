@@ -1,9 +1,10 @@
 guide <- Cicerone$
   new()$ 
   step(
-    el = "corpus_box",
+    ".content-wrapper",
     title = "Text Input",
-    description = "This is where you enter the text you want to print."
+    description = "This is where you enter the text you want to print.",
+    is_id = F
   )$
   step(
     el = "antall_linjer",
