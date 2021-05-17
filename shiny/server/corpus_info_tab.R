@@ -29,7 +29,7 @@ shiny::observe({
 
     # Info til infofane
     output$corpus_info <- shiny::renderText({
-      source("./shiny/server/2_event_search_button/check_search_arguments.R",
+      source("./server/2_event_search_button/check_search_arguments.R",
         local = TRUE
       )
       # Flagging that validation passed and that therefore

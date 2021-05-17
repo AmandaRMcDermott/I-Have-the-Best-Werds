@@ -11,19 +11,19 @@ min_rad <-
 
 
 # UI element control ------------------------------------------------------
-source("./shiny/server/3_event_corpus_map_click/UI_element_control_data_365.R", local = TRUE)
+source("./server/3_event_corpus_map_click/UI_element_control_data_365.R", local = TRUE)
 
 # Preparing the day's corpus ----------------------------------------------
-source("./shiny/server/3_event_corpus_map_click/preparing_day_corpus.R", local = TRUE)
+source("./server/3_event_corpus_map_click/preparing_day_corpus.R", local = TRUE)
 
 # List of document titles in tab ------------------------------------------
-source("./shiny/server/3_event_corpus_map_click/title_list.R", local = TRUE)
+source("./server/3_event_corpus_map_click/title_list.R", local = TRUE)
 
 # Corpus day map ----------------------------------------------------------
-source("./shiny/server/3_event_corpus_map_click/rendering_day_corpus_map.R", local = TRUE)
+source("./server/3_event_corpus_map_click/rendering_day_corpus_map.R", local = TRUE)
 
 # Auto-scroll document and day corpus map to top
-source("./shiny/server/3_event_corpus_map_click/js_auto_scroll.R", local = TRUE)
+source("./server/3_event_corpus_map_click/js_auto_scroll.R", local = TRUE)
             }
         }
 
@@ -33,16 +33,16 @@ source("./shiny/server/3_event_corpus_map_click/js_auto_scroll.R", local = TRUE)
                 if (length(min_rad) > 0) {
 
 # UI element control ------------------------------------------------------
-source("./shiny/server/3_event_corpus_map_click/UI_element_control_data_dok.R", local = TRUE)
+source("./server/3_event_corpus_map_click/UI_element_control_data_dok.R", local = TRUE)
 
 # Text highlighting and text document display -----------------------------
-source("./shiny/server/3_event_corpus_map_click/display_document_text.R", local = TRUE)
+source("./server/3_event_corpus_map_click/display_document_text.R", local = TRUE)
 
 # Document info tab -------------------------------------------------------
-source("./shiny/server/3_event_corpus_map_click/document_info_tab_data_dok.R", local = TRUE)
+source("./server/3_event_corpus_map_click/document_info_tab_data_dok.R", local = TRUE)
 
 # Document visualisation --------------------------------------------------
-source("./shiny/server/3_event_corpus_map_click/document_visualisation.R", local = TRUE)
+source("./server/3_event_corpus_map_click/document_visualisation.R", local = TRUE)
 
 # Potential "extra" tab ---------------------------------------------------
 if (INCLUDE_EXTRA == TRUE) {
@@ -50,12 +50,12 @@ if (INCLUDE_EXTRA == TRUE) {
 }
 
 # Auto-scroll document to top
-source("./shiny/server/3_event_corpus_map_click/js_auto_scroll.R", local = TRUE)
+source("./server/3_event_corpus_map_click/js_auto_scroll.R", local = TRUE)
 
         }
     }
 
 # JS positioning of UI elements --------------------------------------
-source("./shiny/server/3_event_corpus_map_click/ui_positioning.R", local = TRUE)
+source("./server/3_event_corpus_map_click/ui_positioning.R", local = TRUE)
 
 })

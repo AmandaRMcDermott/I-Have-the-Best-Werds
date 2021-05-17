@@ -16,12 +16,12 @@ loaded_data<<-corporaexplorer::prepare_data(dataset=df2
                                             ,corpus_name="SOTU/UNGD")
 
 
-source("./shiny/config/backwards_compatibility.R", local = TRUE)
+source("./config/backwards_compatibility.R", local = TRUE)
 
 # Constants ---------------------------------------------------------------
 
-source("./shiny/config/constants.R", local = TRUE)
-source("./shiny/config/config_convenience_functions.R", local = TRUE)
+source("./config/constants.R", local = TRUE)
+source("./config/config_convenience_functions.R", local = TRUE)
 
 # From corporaexplorerobject --------------------------------------------
 
@@ -162,4 +162,4 @@ INITIAL_PLOT_SIZE <- plot_size(loaded_data$original_data$data_dok,
 
 # Pre-filled sidebar input from function argument -------------------------
 
-source("./shiny/config/sidebar_input_values_from_function_call.R", local = TRUE)
+source("./config/sidebar_input_values_from_function_call.R", local = TRUE)
