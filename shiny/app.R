@@ -2,7 +2,7 @@
 require(shiny)
 require(tidyverse)
 require(cicerone)
-
+require(data.table)
 
 
 # Function files ----------------------------------------------------------
@@ -34,6 +34,7 @@ if (!is.null(getOption("shiny.testmode"))) {
 
 ui <- function(id) {
 
+div(id="test",
   shinydashboard::dashboardPage(
     
     title = 'Corpus exploration',
@@ -48,6 +49,7 @@ ui <- function(id) {
     
     shinydashboard::dashboardBody(
       
+     use_cicerone(),
       
       # CSS and JS files --------------------------------------------------
       source("./shiny/ui/css_js_import.R", local = TRUE)$value,
@@ -56,6 +58,7 @@ ui <- function(id) {
       # Fluid row ---------------------------------------------------------
       
       shiny::fluidRow(
+
         # Corpus map/corpus info box -------------------------------
         source("./shiny/ui/ui_corpus_box.R", local = TRUE)$value,
         
@@ -76,7 +79,8 @@ ui <- function(id) {
       # Body ends
     )
     # Page ends
-  )
+  ),
+)
 }
 
 #=============================================================================#
@@ -99,6 +103,9 @@ server <- function(input, output, session) {
   source("./shiny/ui/render_ui_sidebar_date_filtering.R", local = TRUE)
   source("./shiny/ui/hide_ui_sidebar_plot_mode.R", local = TRUE)
   source("./shiny/ui/set_colours_in_search_fields.R", local = TRUE)
+  output$dropdownmenu<- renderMenu({
+    shinyjs::onclick(id="dropdown",guide$init()$start())
+  })
   
   # Session variables -------------------------------------------------------
   source("./shiny/server/session_variables.R", local = TRUE)

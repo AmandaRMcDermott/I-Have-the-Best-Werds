@@ -81,7 +81,7 @@ create_df_for_info <- function(session_variables,
     full_terms = full_terms,
     tresh = tresh,
     cust_col = cust_col,
-    terms = terms,
+    terms = gsub("\\\\b","",terms),
     years = Years
   ))
 }
@@ -113,7 +113,8 @@ show_corpus_info_table <- function(search_arguments,
       cust_col
     )) %>%
     dplyr::mutate("Found in % of documents" = Documents / nrow(start_df) * 100) %>%
-    dplyr::mutate("Hits per document" = Hits / nrow(start_df))
+    dplyr::mutate("Hits per document" = Hits / nrow(start_df))%>%
+    dplyr::mutate(Term = gsub("\\\b","",Term)) # Ensures that term in corpus info table doesn't have "\b"
 
   df <- dplyr::select(df,
     Term,
@@ -228,7 +229,7 @@ corpus_info_plot <- function(start_df_list, search_arguments, info_mode) {
 
     df <- tidyr::gather(df, "Term", value = "Count", -Year)
 
-    fig_tib <- df %>%
+    fig_tib <- df %>%      
       dplyr::group_by(Year, Term) %>%
       dplyr::summarise(Count = as.integer(sum(Count)), .groups = "drop_last")
 
@@ -241,6 +242,11 @@ corpus_info_plot <- function(start_df_list, search_arguments, info_mode) {
       padr::fill_by_value(Count, value = 0)
     }
 
+    # Ensures that term in corpus info table doesn't have "\b"
+    fig_tib <- fig_tib %>% 
+      dplyr::mutate(Term = gsub("\\\\b","",Term))
+    
+    # Plotting starts
     info_plot <- ggplot2::ggplot(data = fig_tib)
     if (length(unique(fig_tib$Year)) == 1 | DATE_BASED_CORPUS == FALSE) {
       info_plot <-
@@ -281,7 +287,7 @@ corpus_info_plot <- function(start_df_list, search_arguments, info_mode) {
       ggplot2::theme(
         legend.title = ggplot2::element_blank(),
         legend.position = "top",
-        legend.text = ggplot2::element_text(size=7)
+        legend.text = ggplot2::element_text(size=9) # made legend text larger
       ) +
       ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90,
                                                          vjust = 0.5,

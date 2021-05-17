@@ -2,7 +2,19 @@
 # Data set-up -------------------------------------------------------------
 
 #loaded_data <- getShinyOption("corporaexplorer_data")
-loaded_data<<-corporaexplorer::prepare_data(sotu::sotu_text)
+df <- fread("https://raw.githubusercontent.com/AmandaRMcDermott/I-Have-the-Best-Werds/master/data/speeches.csv")
+df2 <<- df%>% 
+    group_by(country,year,context) %>% 
+    summarize(text = str_c(text, collapse=" "))%>%
+    rename("Text"=text)%>%
+    mutate(Text=gsub("[^[:alnum:]///' ]","",Text))
+rm(df)
+loaded_data<<-corporaexplorer::prepare_data(dataset=df2
+                                            ,date_based_corpus=F
+                                            ,grouping_variable="country"
+                                            ,within_group_identifier="context"
+                                            ,corpus_name="SOTU/UNGD")
+
 
 source("./shiny/config/backwards_compatibility.R", local = TRUE)
 

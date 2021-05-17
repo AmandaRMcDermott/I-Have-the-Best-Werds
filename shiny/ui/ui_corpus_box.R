@@ -1,5 +1,4 @@
 shinydashboard::tabBox(
-    use_cicerone(), # include dependencies
     id = "corpus_box",
     width = 6,
     title = CORPUS_TITLE,

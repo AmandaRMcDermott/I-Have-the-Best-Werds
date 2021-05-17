@@ -15,6 +15,8 @@ collect_search_terms <- function() {
         # unique
     if(length(terms) == 0){
         terms <- ""
+    }else if (length(terms) > 0) {
+        terms <- str_replace_all(terms,"\\b|^\\b","\\\\b")
     }
 
     return(terms)
@@ -25,7 +27,7 @@ collect_search_terms <- function() {
 #' @return Character vector.
 collect_highlight_terms <- function() {
     if (is.null(isolate(input$more_terms_button))) {
-        # avgjørende at is.null-varianten kommer først i if-statementet!
+
         terms_highlight <- collect_search_terms()
     }   else if (isolate(input$more_terms_button == 'Yes')) {
         terms_highlight <- isolate(input$highlight_terms_area) %>%
